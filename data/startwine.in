@@ -9,7 +9,7 @@ fi
 
 export SW_GIT_VER="@VERSION@"
 export UTILS_GIT_VER="2.6"
-export RUNTIME_GIT_VER="0.7"
+export RUNTIME_GIT_VER="0.8"
 export PFX_DEF_GIT_VER="0.2"
 
 [ ! -d "$HOME/.config" ] && \
@@ -315,7 +315,7 @@ if [[ "$PFX_DEF_VER" -lt "$PFX_DEF_FORMAT_VER" ]]; then
         rm -rf "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"
 fi
 
-if [[ "$RUNTIME_VER" -lt "$RUNTIME_FORMAT_VER" ]]; then
+if [[ "$RUNTIME_VER" < "$RUNTIME_FORMAT_VER" ]]; then
 
     export URL_RUNTIME_LIST=(
        "https://huggingface.co/SudoNano/sw_repo/resolve/main/runtime/sw_runtime.iso?download=true"
@@ -345,21 +345,6 @@ if [[ "$RUNTIME_VER" -lt "$RUNTIME_FORMAT_VER" ]]; then
 fi
 
 if [[ "$SCRIPT_VER" -lt "$SW_GIT_VER" ]]; then
-
-    if [ -x "$(command -v gsettings)" ]; then
-
-        [ ! -d "$HOME/.local/share/icons" ] && \
-            mkdir -p "$HOME/.local/share/icons"
-
-        THEME_NAME=$(gsettings get org.gnome.desktop.interface icon-theme | sed -r "s/'//g" | sed -r "s/-.*//g")
-        export THEME_NAME
-        COPY_THEMES="$(ls -d "/usr/share/icons/$THEME_NAME"*)"
-        for COPY_THEME in $COPY_THEMES ; do
-            [ ! -d "$HOME/.local/share/icons/$(basename $COPY_THEME)" ] && \
-                cp -rf "$COPY_THEME" "$HOME/.local/share/icons" && \
-                echo "$(basename $COPY_THEME) Copy completed successfully"
-        done
-    fi
 
     [ -d "${START_WINE_PATH}/data/scripts" ] && \
         rm -rf "${START_WINE_PATH}/data/scripts"
