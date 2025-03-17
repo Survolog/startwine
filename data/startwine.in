@@ -8,8 +8,8 @@ if [ "$EUID" = 0 ]; then
 fi
 
 export SW_GIT_VER="@VERSION@"
-export UTILS_GIT_VER="2.6"
-export RUNTIME_GIT_VER="0.8"
+export UTILS_GIT_VER="2.7"
+export RUNTIME_GIT_VER="0.9"
 export PFX_DEF_GIT_VER="0.2"
 
 [ ! -d "$HOME/.config" ] && \
@@ -265,7 +265,7 @@ try_download () {
                     dl_progress
                 elif is_exist curl ; then
                     curl -R --progress-bar --insecure --fail -L "$URL" -o \
-                    "$FILEDIR/$FILENAME" |& tr '\r' '\n'|\
+                    "$FILEDIR/$FILENAME" |& tr '\r' '\n'|sed '0,/100/{/100/d;}'|\
                     sed -ur 's|[# ]+||g;s|.*=.*||g;s|.*|#Downloading at &\n&|g'|\
                     dl_progress
                 elif is_exist wget2 ; then
