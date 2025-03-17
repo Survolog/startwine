@@ -25,42 +25,32 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 
 Make the file executable and launch it with a double click
 
-## To install with one command:
-```
+## Installation with one command:
+```bash
 bash -c "$(curl -sL RusNor.github.io)"
 ```
 or
-```
+```bash
 bash -c "$(wget -qO - RusNor.github.io)"
 ```
-or
-```
-bash -c "$(curl -sL nix-on-nix.github.io)"
-```
-or
-```
-bash -c "$(wget -qO - nix-on-nix.github.io)"
-```
 
-Mirror: HuggingFace
+The command for Ubuntu if the installation suddenly fails
 
+```shell
+sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ```
-bash -c "$(curl -sL 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
+```shell
+sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_unprivileged_userns=0
 ```
-or
-```
-bash -c "$(wget -qO - 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
-```
-
 ## GUI
 
 Video demonstration of StartWine interface
 
-https://github.com/RusNor/StartWine-Launcher/assets/81373196/2aa73e3c-87ed-4e99-a110-5112a7cd128a
+https://github.com/user-attachments/assets/d477c4a5-f525-4162-a78f-fd770427c3e9
 
 If you need quick access to folders or to add your own folder to a bookmark, click on the corresponding icon as shown in the video demonstration.
 
-https://github.com/RusNor/StartWine-Launcher/assets/81373196/d784f430-357c-49f8-bdcc-90fcd5add1c9
+https://github.com/user-attachments/assets/c19b7e1c-cd5d-46e2-b523-11fc7524f78a
 
 StartWine Screenshots (Doubtful, but okeey)
 
@@ -71,15 +61,14 @@ StartWine Screenshots (Doubtful, but okeey)
 ![sw_image5](/handbook/en/sw_image5.png)
 ![sw_image6](/handbook/en/sw_image6.png)
 ![sw_image7](/handbook/en/sw_image7.png)
+![sw_image8](/handbook/en/sw_image8.png)
 
 ## Creating shortcuts and running games
-If you click "NO" in the choice to create a prefix for .exe and other windup formats, the default prefix for the shortcut will be used by default.
+Go to the directory, click 2 times on the .exe file and select “Create shortcut”
 
-Otherwise, just hit the start button and the game will launch
+After that you can just click on the “Start” button and start playing your exquisite game :)
 
-https://github.com/RusNor/StartWine-Launcher/assets/81373196/e4424939-dcf0-4e7b-be05-28f22d6e925c
-
-Note that StartWine has a ``StartWine-Run.desktop`` that is used by default in file managers such as [dolphin](https://en.wikipedia.org/wiki/Dolphin_(file_manager)), [Nautilus](https://en.wikipedia.org/wiki/GNOME_Files) etc. to run a .exe file without the StartWine interface in addition to the usual interface shortcut
+https://github.com/user-attachments/assets/8759ccd4-11ae-4b41-a181-f3b77a45c855
 
 Tip!
 
@@ -93,20 +82,15 @@ StartWine was written from scratch, but using already ready-made components with
 > List 
 
 * [GTK 4](https://www.gtk.org/)
-* [Wine](https://www.winehq.org/)
 * [Wine-Staging](https://github.com/Kron4ek/Wine-Builds)
-* [Wine GE](https://github.com/GloriousEggroll/wine-ge-custom)
 * [Proton GE](https://github.com/GloriousEggroll/proton-ge-custom)
 * [Steam Proton](https://github.com/ValveSoftware/Proton)
-* [Lutris](https://github.com/lutris/wine)
-* [Lutris GE](https://github.com/GloriousEggroll/proton-ge-custom)
 * [DXVK](https://github.com/doitsujin/dxvk)
 * [DXVK GE](https://github.com/GloriousEggroll/wine-ge-custom)
 * [VK3D](https://github.com/HansKristian-Work/vkd3d-proton)
 * [VK3D GE](https://github.com/GloriousEggroll/wine-ge-custom)
 * [MangoHud](https://github.com/flightlessmango/MangoHud) (Thanks [VHSgunzo](https://github.com/VHSgunzo) for the patch to work on Nvidia graphics cards!)
 * [vkBasalt](https://github.com/DadSchoorse/vkBasalt)
-* [gamemode](https://github.com/FeralInteractive/gamemode)
 * [Mesa](https://www.mesa3d.org/)
 * [Runimage](https://github.com/VHSgunzo/runimage)
 * [Runimage nvidia drivers](https://github.com/VHSgunzo/runimage-nvidia-drivers)
@@ -140,7 +124,6 @@ StartWine was written from scratch, but using already ready-made components with
 - Survolog
 - Lex
 - Lintech
-- LinuxShef
 - Sheridan
 - Wik
 
@@ -154,7 +137,7 @@ Thank you to everyone who participated in the testing and development of StartWi
 
 The author of the manual > [Lintech](https://www.youtube.com/c/Lintech8)
 
-Website > [Click](https://startwine-project.ru/)
+Website > [Click](https://startwine-launcher.ru/)
 
 Telegram > [Click](https://t.me/StartWine)
 

@@ -23,7 +23,7 @@ Discord > [Click](https://discord.gg/jjY3auVdfm)
 
 Сделайте файл исполняемым и запустите двойным кликом
 
-## Для установки одной командой:
+## Установка одной командой:
 ```
 bash -c "$(curl -sL RusNor.github.io)"
 ```
@@ -31,34 +31,25 @@ bash -c "$(curl -sL RusNor.github.io)"
 ```
 bash -c "$(wget -qO - RusNor.github.io)"
 ```
-или
-```
-bash -c "$(curl -sL nix-on-nix.github.io)"
-```
-или
-```
-bash -c "$(wget -qO - nix-on-nix.github.io)"
-```
 
-Зеркало: HuggingFace
+Команды для Ubuntu если вдруг установка не проходит
 
+```shell
+sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ```
-bash -c "$(curl -sL 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
-```
-или
-```
-bash -c "$(wget -qO - 'https://huggingface.co/SudoNano/sw_repo/resolve/main/sw_install?download=true')"
+```shell
+sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_unprivileged_userns=0
 ```
 
 ## Интерфейс
 
 Видео демонстрация интерфейса StartWine
 
-https://github.com/RusNor/StartWine-Launcher/assets/81373196/d3b1bafd-8feb-40b0-aed3-062345d1ee45
+https://github.com/user-attachments/assets/0fd2f05a-c7e4-4c16-90ee-5cd53da0f7e3
 
 Если вам надо быстрый доступ к папкам или добавить в закладку свою папку, то нажмите на соответсвующий значок как показано в видео
 
-https://github.com/RusNor/StartWine-Launcher/assets/81373196/54c14c12-05f8-48e2-86db-83a62c573054
+https://github.com/user-attachments/assets/6037ec38-a5ad-40b4-ad6d-81662f83911e
 
 Скриншоты StartWine (Сомнительно, но окееей)
 
@@ -69,15 +60,14 @@ https://github.com/RusNor/StartWine-Launcher/assets/81373196/54c14c12-05f8-48e2-
 ![sw_image5](/handbook/ru/sw_image5.png)
 ![sw_image6](/handbook/ru/sw_image6.png)
 ![sw_image7](/handbook/ru/sw_image7.png)
+![sw_image8](/handbook/ru/sw_image8.png)
 
 ## Cоздание ярлыков и запуск игр
-Если нажать кнопку "НЕТ" в выборе создания префикса для .exe и других виндовых форматов, то будет использоваться префикс по умолчанию для ярлыка.
+Заходим в каталог, щёлкаем 2 раза на .exe файл и выбираем "Создать ярлык"
 
-В ином случае просто нажимайте кнопку "Пуск" и игра запустится
+После можете просто нажать на кнопку "Пуск" и начать играть в свою изысканную игру :)
 
-https://github.com/RusNor/StartWine-Launcher/assets/81373196/75562e00-94e6-439d-aee9-eca7ce4a12a5
-
-Обратите внимание, что у StartWine помимо обычного ярлыка с интерфейсом существует ```StartWine-Run.desktop``` который по умолчанию используется в файловых менеджерах таких, как [dolphin](https://ru.wikipedia.org/wiki/Dolphin_(%D1%84%D0%B0%D0%B9%D0%BB%D0%BE%D0%B2%D1%8B%D0%B9_%D0%BC%D0%B5%D0%BD%D0%B5%D0%B4%D0%B6%D0%B5%D1%80)), [Nautilus](https://ru.wikipedia.org/wiki/GNOME_Files) и т.д для запуска .exe файла без интерфейса StartWine
+https://github.com/user-attachments/assets/a9754fba-6c97-4ecd-8ebb-95c0b1e4e3ed
 
 Совет!
 
@@ -91,20 +81,15 @@ StartWine был написан с нуля, но с использование�
 > Список 
 
 * [GTK 4](https://www.gtk.org/)
-* [Wine](https://www.winehq.org/)
 * [Wine-Staging](https://github.com/Kron4ek/Wine-Builds)
-* [Wine GE](https://github.com/GloriousEggroll/wine-ge-custom)
 * [Proton GE](https://github.com/GloriousEggroll/proton-ge-custom)
 * [Steam Proton](https://github.com/ValveSoftware/Proton)
-* [Lutris](https://github.com/lutris/wine)
-* [Lutris GE](https://github.com/GloriousEggroll/proton-ge-custom)
 * [DXVK](https://github.com/doitsujin/dxvk)
 * [DXVK GE](https://github.com/GloriousEggroll/wine-ge-custom)
 * [VK3D](https://github.com/HansKristian-Work/vkd3d-proton)
 * [VK3D GE](https://github.com/GloriousEggroll/wine-ge-custom)
 * [MangoHud](https://github.com/flightlessmango/MangoHud) (Спасибо [VHSgunzo](https://github.com/VHSgunzo) за патч для работы на видеокартах Nvidia!)
 * [vkBasalt](https://github.com/DadSchoorse/vkBasalt)
-* [gamemode](https://github.com/FeralInteractive/gamemode)
 * [Mesa](https://www.mesa3d.org/)
 * [Runimage](https://github.com/VHSgunzo/runimage)
 * [Runimage nvidia drivers](https://github.com/VHSgunzo/runimage-nvidia-drivers)
@@ -138,7 +123,6 @@ StartWine был написан с нуля, но с использование�
 - Survolog
 - Lex
 - Lintech
-- LinuxShef
 - Sheridan
 - Wik
 
@@ -152,7 +136,7 @@ StartWine был написан с нуля, но с использование�
 
 Автор руководства > [Lintech](https://www.youtube.com/c/Lintech8)
 
-Веб-сайт > [Клик](https://startwine-project.ru/)
+Веб-сайт > [Клик](https://startwine-launcher.ru/)
 
 Телеграм > [Клик](https://t.me/StartWine)
 
