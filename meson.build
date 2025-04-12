@@ -5,9 +5,13 @@ project('StartWine',
 
 # Convert .po to .mo for make opensource happy
 ru_mo = meson.current_source_dir() / 'data' / 'scripts' / 'locale' / 'ru' / 'LC_MESSAGES' / 'StartWine.mo'
+zh_mo = meson.current_source_dir() / 'data' / 'scripts' / 'locale' / 'zh' / 'LC_MESSAGES' / 'StartWine.mo'
 ru_po = meson.current_source_dir() / 'data' / 'scripts' / 'locale' / 'ru' / 'LC_MESSAGES' / 'ru.po'
-convert_po = [find_program('msgfmt'), ru_po, '-o', ru_mo]
-run_command(convert_po)
+zh_po = meson.current_source_dir() / 'data' / 'scripts' / 'locale' / 'zh' / 'LC_MESSAGES' / 'zh.po'
+convert_ru_po = [find_program('msgfmt'), ru_po, '-o', ru_mo]
+convert_zh_po = [find_program('msgfmt'), zh_po, '-o', zh_mo]
+run_command(convert_ru_po)
+run_command(convert_zh_po)
 
 # Install icon
 install_data('data/img/gui_icons/sw_icon.svg',
