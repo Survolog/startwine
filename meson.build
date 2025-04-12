@@ -1,5 +1,5 @@
 project('StartWine',
-	version: '409',
+	version: '410',
 	license: 'GPL-3.0'
 )
 
@@ -27,8 +27,8 @@ configure_file(input: 'data/startwine.in',
 )
 
 # Install desktop file
-configure_file(input: 'data/StartWine.desktop.in',
-	output: 'StartWine.desktop',
+configure_file(input: 'data/ru.launcher.StartWine.desktop.in',
+	output: 'ru.launcher.StartWine.desktop',
 	install_dir: join_paths(get_option('datadir'), 'applications'),
 	install: true,
 	install_mode: 'rw-r--r--',
@@ -38,5 +38,5 @@ configure_file(input: 'data/StartWine.desktop.in',
 # Install program data
 install_subdir('data',
 	install_dir: join_paths(get_option('datadir'), 'startwine'),
-	exclude_files: ['startwine.in', 'StartWine.desktop.in']
+	exclude_files: ['startwine.in', 'ru.launcher.StartWine.desktop.in']
 )

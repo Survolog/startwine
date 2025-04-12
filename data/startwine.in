@@ -3,14 +3,13 @@
 
 if [ "$EUID" = 0 ]; then
     clear
-    echo "####  Please do not run this script as root!  ####"
+    echo "####   Please do not run this script as root!   ####"
     exit 1
 fi
 
+#    version
 export SW_GIT_VER="@VERSION@"
-export UTILS_GIT_VER="2.7"
-export RUNTIME_GIT_VER="0.9"
-export PFX_DEF_GIT_VER="0.2"
+export RUNTIME_GIT_VER="1.0"
 
 [ ! -d "$HOME/.config" ] && \
     mkdir -p "$HOME/.config"
@@ -39,19 +38,9 @@ fi
 [ ! -d "${START_WINE_PATH}/data/tmp" ] && \
     mkdir -p "${START_WINE_PATH}/data/tmp"
 
-if [ -f "${START_WINE_PATH}/data/tools/utils/version" ]; then
-    UTILS_VER="$(cat "${START_WINE_PATH}/data/tools/utils/version" | tr -d "[:alpha:][:punct:]")"
-    export UTILS_VER
-fi
-
 if [ -f "${START_WINE_PATH}/data/runtime/version" ]; then
     RUNTIME_VER="$(cat "${START_WINE_PATH}/data/runtime/version" | tr -d "[:alpha:][:punct:]")"
     export RUNTIME_VER
-fi
-
-if [ -f "${START_WINE_PATH}/data/pfx_backup/version" ]; then
-    PFX_DEF_VER="$(cat "${START_WINE_PATH}/data/pfx_backup/version" | tr -d "[:alpha:][:punct:]")"
-    export PFX_DEF_VER
 fi
 
 if [ -f "${START_WINE_PATH}/data/scripts/version" ]; then
@@ -59,14 +48,8 @@ if [ -f "${START_WINE_PATH}/data/scripts/version" ]; then
     export SCRIPT_VER
 fi
 
-UTILS_FORMAT_VER="$(echo "${UTILS_GIT_VER}" | tr -d "[:alpha:][:punct:]")"
-export UTILS_FORMAT_VER
-
 RUNTIME_FORMAT_VER="$(echo "${RUNTIME_GIT_VER}" | tr -d "[:alpha:][:punct:]")"
 export RUNTIME_FORMAT_VER
-
-PFX_DEF_FORMAT_VER="$(echo "${PFX_DEF_GIT_VER}" | tr -d "[:alpha:][:punct:]")"
-export PFX_DEF_FORMAT_VER
 
 try_download () {
 
@@ -305,16 +288,6 @@ try_download () {
 
 }
 
-if [[ "$UTILS_VER" -lt "$UTILS_FORMAT_VER" ]]; then
-    [ -d "${START_WINE_PATH}/data/tools/utils" ] && \
-        rm -rf "${START_WINE_PATH}/data/tools/utils"
-fi
-
-if [[ "$PFX_DEF_VER" -lt "$PFX_DEF_FORMAT_VER" ]]; then
-    [ -f "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" ] && \
-        rm -rf "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"
-fi
-
 if [[ "$RUNTIME_VER" < "$RUNTIME_FORMAT_VER" ]]; then
 
     export URL_RUNTIME_LIST=(
@@ -333,11 +306,16 @@ if [[ "$RUNTIME_VER" < "$RUNTIME_FORMAT_VER" ]]; then
     chmod +x "${SW_RUNTIME}"
 
     if [ -f "${SW_RUNTIME}" ]; then
-        [ ! -f "$HOME/.local/bin/sw" ] && \
+        [ ! -L "$HOME/.local/bin/sw" ] && \
             ln -sfr "${SW_RUNTIME}" "$HOME/.local/bin/sw"
 
-        [ ! -f "${START_WINE_PATH}/data/runtime/sw" ] && \
+        [ ! -L "${START_WINE_PATH}/data/runtime/sw" ] && \
             ln -sfr "${SW_RUNTIME}" "${START_WINE_PATH}/data/runtime/sw"
+
+        [ -f "${START_WINE_PATH}/data/runtime/ssrv" ] && \
+            rm -rf "${START_WINE_PATH}/data/runtime/ssrv"
+
+        "${SW_RUNTIME}" cp -f "/usr/bin/ssrv" "${START_WINE_PATH}/data/runtime/ssrv"
 
         echo "${RUNTIME_GIT_VER}" > "${START_WINE_PATH}/data/runtime/version"
     fi
@@ -345,6 +323,12 @@ if [[ "$RUNTIME_VER" < "$RUNTIME_FORMAT_VER" ]]; then
 fi
 
 if [[ "$SCRIPT_VER" -lt "$SW_GIT_VER" ]]; then
+
+    [ -d "${START_WINE_PATH}/data/tools/utils" ] && \
+        rm -rf "${START_WINE_PATH}/data/tools/utils"
+
+    [ -f "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" ] && \
+        rm -rf "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"
 
     [ -d "${START_WINE_PATH}/data/scripts" ] && \
         rm -rf "${START_WINE_PATH}/data/scripts"
@@ -373,7 +357,10 @@ if [[ "$SCRIPT_VER" -lt "$SW_GIT_VER" ]]; then
     [ -f "$HOME/.local/share/applications/StartWine.desktop" ] && \
         rm -rf "$HOME/.local/share/applications/StartWine.desktop"
 
-    if [ -f "/usr/share/applications/StartWine.desktop" ]; then
+    [ -f "$HOME/.local/share/applications/ru.launcher.StartWine.desktop" ] && \
+        rm -rf "$HOME/.local/share/applications/ru.launcher.StartWine.desktop"
+
+    if [ -f "/usr/share/applications/ru.launcher.StartWine.desktop" ]; then
 
         [ ! -d "$HOME/.local/share/applications" ] && \
             mkdir -p "$HOME/.local/share/applications"
@@ -388,9 +375,9 @@ if [[ "$SCRIPT_VER" -lt "$SW_GIT_VER" ]]; then
             echo "MimeType=application/x-wine-extension-msp;application/x-msi;application/x-ms-dos-executable;"
             echo "Categories=Game;"
             echo "Icon=startwine"
-        } > "${HOME}/.local/share/applications/StartWine.desktop"
+        } > "${HOME}/.local/share/applications/ru.launcher.StartWine.desktop"
 
-        chmod +x "${HOME}/.local/share/applications/StartWine.desktop"
+        chmod +x "${HOME}/.local/share/applications/ru.launcher.StartWine.desktop"
     fi
 
     export START_WINE_EXTRACT="$(dirname "${START_WINE_PATH}")"
@@ -414,6 +401,8 @@ if [[ "$SCRIPT_VER" -lt "$SW_GIT_VER" ]]; then
         [ -f "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz" ] && \
             rm -rf "${START_WINE_PATH}/data/tmp/StartWine_v$SW_GIT_VER.tar.xz"
 
+        echo "${SW_GIT_VER}" > "${START_WINE_PATH}/data/scripts/version"
+
         if [ $DIRECTORY_EXIST == "true" ]; then
             "${START_WINE_PATH}/data/runtime/sw" "$@" ; exit 0
         else
@@ -432,4 +421,3 @@ else
     "${START_WINE_PATH}/data/runtime/sw" "$@" ; exit 0
 fi
 
-################################################################################
