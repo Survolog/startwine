@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-################################################################################
 
 if [ "$EUID" = 0 ]; then
     clear
@@ -9,7 +8,7 @@ fi
 
 #    version
 export SW_GIT_VER="@VERSION@"
-export RUNTIME_GIT_VER="1.0"
+export RUNTIME_GIT_VER="1.1"
 
 [ ! -d "$HOME/.config" ] && \
     mkdir -p "$HOME/.config"
@@ -291,7 +290,7 @@ try_download () {
 if [[ "$RUNTIME_VER" < "$RUNTIME_FORMAT_VER" ]]; then
 
     export URL_RUNTIME_LIST=(
-       "https://huggingface.co/SudoNano/sw_repo/resolve/main/runtime/sw_runtime.iso?download=true"
+       "https://huggingface.co/RusNor/StartWine-data/resolve/main/runtime/sw_runtime.iso?download=true"
        "https://github.com/RusNor/sw_runtime/releases/download/sw_runtime/sw_runtime.iso"
     )
 
@@ -311,11 +310,6 @@ if [[ "$RUNTIME_VER" < "$RUNTIME_FORMAT_VER" ]]; then
 
         [ ! -L "${START_WINE_PATH}/data/runtime/sw" ] && \
             ln -sfr "${SW_RUNTIME}" "${START_WINE_PATH}/data/runtime/sw"
-
-        [ -f "${START_WINE_PATH}/data/runtime/ssrv" ] && \
-            rm -rf "${START_WINE_PATH}/data/runtime/ssrv"
-
-        "${SW_RUNTIME}" cp -f "/usr/bin/ssrv" "${START_WINE_PATH}/data/runtime/ssrv"
 
         echo "${RUNTIME_GIT_VER}" > "${START_WINE_PATH}/data/runtime/version"
     fi
@@ -356,6 +350,9 @@ if [[ "$SCRIPT_VER" -lt "$SW_GIT_VER" ]]; then
 
     [ -f "$HOME/.local/share/applications/StartWine.desktop" ] && \
         rm -rf "$HOME/.local/share/applications/StartWine.desktop"
+
+    [ -f "$HOME/.local/share/applications/StartWineShell.desktop" ] && \
+        rm -rf "$HOME/.local/share/applications/StartWineShell.desktop"
 
     [ -f "$HOME/.local/share/applications/ru.launcher.StartWine.desktop" ] && \
         rm -rf "$HOME/.local/share/applications/ru.launcher.StartWine.desktop"

@@ -1,5 +1,5 @@
 project('StartWine',
-	version: '410',
+	version: '411',
 	license: 'GPL-3.0'
 )
 
