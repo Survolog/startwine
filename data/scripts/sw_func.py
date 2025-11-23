@@ -1845,8 +1845,43 @@ def on_clear_shader_cache():
             if cache.is_file():
                 cache.unlink()
 
+    if sw_mesa_shader_cache_sf.exists():
+        for cache in sw_mesa_shader_cache_sf.iterdir():
+            if cache.is_dir():
+                shutil.rmtree(cache)
+            if cache.is_file():
+                cache.unlink()
+
+    if sw_mesa_shader_cache_db.exists():
+        for cache in sw_mesa_shader_cache_db.iterdir():
+            if cache.is_dir():
+                shutil.rmtree(cache)
+            if cache.is_file():
+                cache.unlink()
+
+    if sw_radv_shader_cache.exists():
+        for cache in sw_radv_shader_cache.iterdir():
+            if cache.is_dir():
+                shutil.rmtree(cache)
+            if cache.is_file():
+                cache.unlink()
+
     if sw_gl_shader_cache.exists():
         for cache in sw_gl_shader_cache.iterdir():
+            if cache.is_dir():
+                shutil.rmtree(cache)
+            if cache.is_file():
+                cache.unlink()
+
+    if sw_nvgl_shader_cache.exists():
+        for cache in sw_nvgl_shader_cache.iterdir():
+            if cache.is_dir():
+                shutil.rmtree(cache)
+            if cache.is_file():
+                cache.unlink()
+
+    if sw_nvidia_shader_cache.exists():
+        for cache in sw_nvidia_shader_cache.iterdir():
             if cache.is_dir():
                 shutil.rmtree(cache)
             if cache.is_file():

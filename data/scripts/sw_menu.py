@@ -1,7 +1,23 @@
 #!/usr/bin/env python3
+
 """
-StartWine graphical shell module.
+Copyright (C) Maslov N.G. Normatov R.R.
+
+This file is part of StartWine-Launcher.
+
+StartWine-Launcher is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option) any
+later version.
+
+StartWine-Launcher is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with
+StartWine-Launcher. If not, see http://www.gnu.org/licenses/.
 """
+
 import time
 from time import time, process_time, sleep, perf_counter
 start_counter = perf_counter()

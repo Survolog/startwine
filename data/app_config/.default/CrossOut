@@ -47,7 +47,12 @@ export SW_USE_FPS_LIMIT="0.0"
 export SW_USE_MANGOHUD_CONFIG="cpu_temp,ram,core_load,cpu_mhz,wine,gpu_temp,gpu_core_clock,vram"
 export SW_USE_WINE="GE-Proton9-20"
 export SW_USE_PFX="pfx_CrossOut"
-################################################################################
+################################  USER CONFIG   ################################
+
+export SW_USE_WOW64=0
+export SW_USE_NTSYNC=0
+export SW_USE_WAYLAND=0
+export SW_USE_UPDATE_SAVES_BACKUP=5
 
 export SOURSE0="${SW_GAME_EXE}"
 export SOURSE1="${SW_GAME_PATH}/launcher.exe"
