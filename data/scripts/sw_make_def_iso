@@ -5,18 +5,18 @@ unset VK_INSTANCE_LAYERS VK_LOADER_LAYERS_ENABLE
 try_remove "${START_WINE_PATH}/data/scripts/winetricks"
 
 export URL="https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks"
-"$CRIER" -d "${URL}" "${START_WINE_PATH}/data/scripts/winetricks" &&
+"$CRIER" -d "${URL}" "${START_WINE_PATH}/data/scripts/winetricks" && \
 chmod +x "${START_WINE_PATH}/data/scripts/winetricks"
 
 export SW_MAKE_PFX_ON_GE=1
 
 if [ "${SW_MAKE_PFX_ON_GE}" == 1 ]; then
-    GE_VER="10-15"
+    GE_VER="10-25"
     WINE_OK=1
     WINE_3
     USE_WINE_BUILD="GE-Proton${GE_VER}"
 else
-    STAG_VER="10.14"
+    STAG_VER="10.19"
     WINE_OK=1
     WINE_4
     USE_WINE_BUILD="wine-${STAG_VER}-staging-tkg-amd64"
@@ -42,8 +42,8 @@ vcrun2005 vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2022 vcrun6 vcrun6sp6 noc
 "${WINESERVER}" -w
 
 export URL="http://legionfonts.com/storage/archives/Segoe%20Script.zip"
-"$CRIER" -d "${URL}" "${START_WINE_PATH}/data/tmp/SegoeScript.zip" &&
-"$CRIER" --zip "${START_WINE_PATH}/data/tmp/SegoeScript.zip" "${START_WINE_PATH}/data/tmp" &&
+"$CRIER" -d "${URL}" "${START_WINE_PATH}/data/tmp/SegoeScript.zip" && \
+"$CRIER" --zip "${START_WINE_PATH}/data/tmp/SegoeScript.zip" "${START_WINE_PATH}/data/tmp" && \
 try_move "${START_WINE_PATH}/data/tmp/Segoe Script.ttf" "$WINEPREFIX/drive_c/windows/Fonts/segoe script.ttf"
 try_remove "${START_WINE_PATH}/data/tmp/SegoeScript.zip"
 
@@ -81,9 +81,9 @@ lang_autodetect=1
 _EOF_
 
 #   https://codecguide.com/download_kl.htm
-export CODEC_VER="1910"
+export CODEC_VER="1925"
 export URL="https://files3.codecguide.com/K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe"
-"$CRIER" -d "${URL}" "${START_WINE_PATH}/data/tmp/K-K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe" &&
+"$CRIER" -d "${URL}" "${START_WINE_PATH}/data/tmp/K-K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe" && \
 "${WINE}" "${START_WINE_PATH}/data/tmp/K-K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe" /verysilent /norestart /LoadInf="${START_WINE_PATH}/data/tmp/klcp_basic_unattended.ini" "$@"
 "${WINESERVER}" -w
 
@@ -105,6 +105,6 @@ try_remove "$WINEPREFIX/drive_c/windows/Fonts/corefonts.installed"
 try_remove "$WINEPREFIX/drive_c/ProgramData/Package Cache"
 try_link "${START_WINE_PATH}/data/app_saves" "$WINEPREFIX/drive_c/users"
 try_remove "${START_WINE_PATH}/data/tmp/pfx_default.iso"
-mksquashfs "${START_WINE_PATH}/data/pfx/pfx_default" "${START_WINE_PATH}/data/tmp/pfx_default.iso" -noappend -b 1M -comp zstd -Xcompression-level 1 &&
+mksquashfs "${START_WINE_PATH}/data/pfx/pfx_default" "${START_WINE_PATH}/data/tmp/pfx_default.iso" -noappend -b 1M -comp zstd -Xcompression-level 1 && \
 "$CRIER" -i "$(eval_gettext "Backup completed successfully")"
 

@@ -47,4 +47,11 @@ export SW_USE_FPS_LIMIT="0.0"
 export SW_USE_MANGOHUD_CONFIG="ram,vram,gpu_temp,gpu_core_clock,wine,cpu_mhz,cpu_temp,core_load"
 export SW_USE_WINE="GE-Proton9-20"
 export SW_USE_PFX="pfx_Anno1800"
+################################  USER CONFIG   ################################
+
+export SW_USE_WOW64=0
+export SW_USE_NTSYNC=0
+export SW_USE_WAYLAND=0
+export SW_USE_UPDATE_SAVES_BACKUP=5
+
 ################################################################################

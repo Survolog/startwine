@@ -34,6 +34,13 @@ sw_progressbar.vertical > trough > progress {
     min-width: 6px;
 }
 
+sw_progressbar.text_white {
+    color: white;
+}
+
+sw_progressbar.text_bold {
+    font-weight: bold;
+}
 
 /*___SPINNER___*/
 
@@ -58,29 +65,6 @@ sw_spinner:checked:disabled {
     }
 }
 
-/*___PICTURE___*/
-
-sw_picture.sw_blur {
-    filter: blur(3px);
-}
-
-sw_picture {
-    border-radius: 14px;
-    background-size: cover;
-    background-position: center;
-    background-clip: border-box;
-    transition: all 225ms cubic-bezier(0.25, 0.5, 0.75, 0.94);
-}
-
-sw_picture.gridview {
-    background-image: repeating-linear-gradient(@sw_bg_color, @sw_accent_fg_color);
-}
-
-sw_picture.rotate {
-    transform: rotate(180deg);
-    transition: all 225ms cubic-bezier(0.25, 0.5, 0.75, 0.94);
-}
-
 /*___CLASSES___*/
 
 .shadow {
@@ -96,8 +80,8 @@ sw_picture.rotate {
 }
 
 .accent_color {
-    color: @sw_invert_accent_bg_color;
-    background-color: alpha(@sw_accent_fg_color, 10.0);
+    color: @sw_invert_accent_fg_color;
+    background-image: image(alpha(@sw_accent_fg_color, 10.0));
 }
 
 .accent_label {
@@ -114,6 +98,18 @@ sw_picture.rotate {
 
 .corner_0 {
     border-radius: 0px;
+}
+
+.corner_10 {
+    border-radius: 10px;
+}
+
+.corner_18 {
+    border-radius: 18px;
+}
+
+.corner_22 {
+    border-radius: 22px;
 }
 
 .darkened {
@@ -282,6 +278,30 @@ sw_picture.rotate {
     font-size: 27pt;
 }
 
+.outline_color {
+    outline: 2px solid @sw_invert_accent_bg_color;
+}
+
+.margin_4 {
+    margin: 4px;
+}
+
+.margin_8 {
+    margin: 8px;
+}
+
+.margin_12 {
+    margin: 12px;
+}
+
+.margin_16 {
+    margin: 16px;
+}
+
+.margin_32 {
+    margin: 32px;
+}
+
 /*___IMAGE___*/
 
 sw_image.sw_blur {
@@ -295,6 +315,29 @@ sw_image {
     background-size: cover;
     background-position: center;
     background: none;
+}
+
+/*___PICTURE___*/
+
+sw_picture.sw_blur {
+    filter: blur(3px);
+}
+
+sw_picture {
+    border-radius: 14px;
+    background-size: cover;
+    background-position: center;
+    background-clip: border-box;
+    transition: all 225ms cubic-bezier(0.25, 0.5, 0.75, 0.94);
+}
+
+sw_picture.gridview {
+    background-image: repeating-linear-gradient(@sw_bg_color, @sw_accent_fg_color);
+}
+
+sw_picture.rotate {
+    transform: rotate(180deg);
+    transition: all 225ms cubic-bezier(0.25, 0.5, 0.75, 0.94);
 }
 
 /*___LABELS___*/
@@ -368,7 +411,7 @@ sw_label_info {
     font-weight: 500;
     font-variant: normal;
     font-size: 12pt;
-    color: #0099ff;
+    color: @sw_accent_fg_color;
 }
 
 sw_label_warning {
@@ -383,16 +426,6 @@ sw_label.warning {
     font-variant: normal;
     font-size: 12pt;
     color: red;
-}
-
-sw_label>selection {
-    background-color: rgba(255, 255, 255, 0.2);
-    background-image: image(rgba(255, 255, 255, 0.2));
-}
-
-sw_label:disabled selection {
-    background-color: rgba(255, 255, 255, 0.1);
-    background-image: image(rgba(255, 255, 255, 0.1));
 }
 
 /*___HEADERBARS___*/
@@ -2129,15 +2162,28 @@ sw_entry:disabled {
 
 sw_entry>text {
     color: @sw_invert_accent_bg_color;
+    padding: 8px;
 }
 
-sw_entry>text selection {
-    background-color: rgba(255, 255, 255, 0.02);
-    background-image: image(rgba(255, 255, 255, 0.02));
+sw_entry>image.left {
+    min-height: 24px;
+    min-width: 24px;
+}
+
+sw_entry.margin_8>image.left {
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+
+sw_entry.margin_8>image.right {
+    margin-top: 8px;
+    margin-bottom: 8px;
 }
 
 selection {
-    background-image: image(rgba(255, 255, 255, 0.02));
+    color: @sw_invert_accent_fg_color;
+    background-color: @sw_accent_fg_color;
+    background-image: image(@sw_accent_fg_color);
 }
 
 sw_entry>text>placeholder {
