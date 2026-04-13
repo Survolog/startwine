@@ -418,21 +418,21 @@ if [[ "${SW_CURRENT_VER}" -lt "${SW_GIT_VER}" ]]; then
 
 #        if try_download "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/StartWine_v${SW_GIT_VER}.tar.xz"; then
 #            echo "####   Download completed successfully   ####"
-            START_WINE_EXTRACT="$(dirname "${START_WINE_PATH}")"
-            export START_WINE_EXTRACT
-            cp -rf /usr/share/startwine/data "${START_WINE_EXTRACT}/StartWine"
-
+        START_WINE_EXTRACT="$(dirname "${START_WINE_PATH}")"
+        export START_WINE_EXTRACT
+        cp -rf /usr/share/startwine/data "${START_WINE_EXTRACT}/StartWine"
+#
 #            if "${SW_RUNTIME}" tar -xvJf "${START_WINE_PATH}/data/tmp/StartWine_v${SW_GIT_VER}.tar.xz" -C "${START_WINE_EXTRACT}"; then
 #                echo "####   Unpacking completed successfully   ####"
-#                echo "${SW_GIT_VER}" > "${START_WINE_PATH}/data/scripts/version"
+        echo "${SW_GIT_VER}" > "${START_WINE_PATH}/data/scripts/version"
 #            else
 #                echo "####   Failed to unpack archive   ####"
 #            fi
-
-        else
-            echo "####   Failed to download archive from (repo), please run the installation again.  ####"
-            exit 1
-        fi
+#
+#        else
+#            echo "####   Failed to download archive from (repo), please run the installation again.  ####"
+#            exit 1
+#        fi
 
         if [ "${DIRECTORY_EXIST}" == "true" ]; then
             "${START_WINE_PATH}/data/runtime/sw" "$@"
