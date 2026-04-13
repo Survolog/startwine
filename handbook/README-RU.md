@@ -31,7 +31,6 @@ bash -c "$(curl -sL RusNor.github.io)"
 ```
 bash -c "$(wget -qO - RusNor.github.io)"
 ```
-
 Команды для Ubuntu если вдруг установка не проходит
 
 ```shell
@@ -43,15 +42,7 @@ sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_
 
 ## Интерфейс
 
-Видео демонстрация интерфейса StartWine
-
-https://github.com/user-attachments/assets/0fd2f05a-c7e4-4c16-90ee-5cd53da0f7e3
-
-Если вам надо быстрый доступ к папкам или добавить в закладку свою папку, то нажмите на соответсвующий значок как показано в видео
-
-https://github.com/user-attachments/assets/6037ec38-a5ad-40b4-ad6d-81662f83911e
-
-Скриншоты StartWine (Сомнительно, но окееей)
+Скриншоты StartWine
 
 ![sw_image1](/handbook/ru/sw_image1.png)
 ![sw_image2](/handbook/ru/sw_image2.png)
@@ -61,13 +52,16 @@ https://github.com/user-attachments/assets/6037ec38-a5ad-40b4-ad6d-81662f83911e
 ![sw_image6](/handbook/ru/sw_image6.png)
 ![sw_image7](/handbook/ru/sw_image7.png)
 ![sw_image8](/handbook/ru/sw_image8.png)
+![sw_image9](/handbook/ru/sw_image9.png)
+![sw_image10](/handbook/ru/sw_image10.png)
+![sw_image11](/handbook/ru/sw_image11.png)
+![sw_image12](/handbook/ru/sw_image12.png)
+![sw_image13](/handbook/ru/sw_image13.png)
 
 ## Cоздание ярлыков и запуск игр
 Заходим в каталог, щёлкаем 2 раза на .exe файл и выбираем "Создать ярлык"
 
 После можете просто нажать на кнопку "Пуск" и начать играть в свою изысканную игру :)
-
-https://github.com/user-attachments/assets/a9754fba-6c97-4ecd-8ebb-95c0b1e4e3ed
 
 Совет!
 
