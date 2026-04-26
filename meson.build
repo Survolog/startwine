@@ -1,18 +1,23 @@
 project('StartWine',
-	version: '420',
+	version: '421',
 	license: 'GPL-3.0'
 )
 
-# Convert .po to .mo for make opensource happy
+# Paths to source (.po) and target (.mo) localization files
 pt_mo = meson.current_source_dir() / 'data' / 'scripts' / 'locale' / 'pt' / 'LC_MESSAGES' / 'StartWine.mo'
 ru_mo = meson.current_source_dir() / 'data' / 'scripts' / 'locale' / 'ru' / 'LC_MESSAGES' / 'StartWine.mo'
 zh_mo = meson.current_source_dir() / 'data' / 'scripts' / 'locale' / 'zh' / 'LC_MESSAGES' / 'StartWine.mo'
+
 pt_po = meson.current_source_dir() / 'data' / 'scripts' / 'locale' / 'pt' / 'LC_MESSAGES' / 'pt.po'
 ru_po = meson.current_source_dir() / 'data' / 'scripts' / 'locale' / 'ru' / 'LC_MESSAGES' / 'ru.po'
 zh_po = meson.current_source_dir() / 'data' / 'scripts' / 'locale' / 'zh' / 'LC_MESSAGES' / 'zh.po'
+
+# Commands for compiling translations
 convert_pt_po = [find_program('msgfmt'), pt_po, '-o', pt_mo]
 convert_ru_po = [find_program('msgfmt'), ru_po, '-o', ru_mo]
 convert_zh_po = [find_program('msgfmt'), zh_po, '-o', zh_mo]
+
+# Performing compilation localization files
 run_command(convert_pt_po)
 run_command(convert_ru_po)
 run_command(convert_zh_po)
