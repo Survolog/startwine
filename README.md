@@ -1,49 +1,91 @@
-![sw_image1](/handbook/sw_logo.svg)
+![sw_image1](/data/img/gui_icons/default_sample.svg)
 
-> StartWine is a launcher that allows you to quickly and easily launch Windows applications on Linux operating systems
+## StartWine is a launcher that allows you to quickly and easily launch Windows applications on Linux operating systems
 
 # **StartWine Guide**
-**English** - [Русский](/handbook/README-RU.md)
+
+**English** - [Русский](/README-RU.md)
 
 ## Review
 1. [Setup](#setup)
-2. [GUI](#gui)
-3. [Creating shortcuts and running games](#creating-shortcuts-and-running-games)
-4. [What is used in StartWine?](#what-is-used-in-startwine)
-5. [Thank you!](#thank-you)
-6. [Useful links](#useful-links)
-7. [License](#license)
+2. [Build](#build)
+3. [GUI](#gui)
+4. [Creating shortcuts and running games](#creating-shortcuts-and-running-games)
+5. [What is used in StartWine?](#what-is-used-in-startwine)
+6. [Thank you!](#thank-you)
+7. [Useful links](#useful-links)
+8. [License](#license)
 
 ## Setup
-To start using the program, download StartWine itself from the GitHub page under sw_releases or from the discord server
+To start using the program, download StartWine itself from the GitHub page in the releases section. Make the file executable, move it to the terminal and press Enter.
 
 GitHub > [Click](https://github.com/RusNor/StartWine-Launcher/releases)
 
-AUR > [I use Arch :p](https://aur.archlinux.org/packages/startwine)
-
-Discord > [Click](https://discord.gg/jjY3auVdfm)
-
-Make the file executable and launch it with a double click
+AUR > [Click](https://aur.archlinux.org/packages/startwine)
 
 ## Installation with one command:
-```bash
+Copy one of the commands, paste it into the terminal and press Enter.
+```
 bash -c "$(curl -sL RusNor.github.io)"
 ```
-or
-```bash
+```
 bash -c "$(wget -qO - RusNor.github.io)"
 ```
-
 The command for Ubuntu if the installation suddenly fails
-
-```shell
+```
 sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 ```
-```shell
+```
 sudo tee -a /etc/sysctl.d/98-apparmor-unuserns.conf <<<kernel.apparmor_restrict_unprivileged_userns=0
 ```
-## GUI
 
+## Build
+## Build dependencies:
+```
+     python3
+     cargo
+     rustup
+     gettext
+     cairo
+     glib
+     gio
+     gobject
+     gdk-pixbuf
+     gdk4
+     pango
+     graphene
+     gsk4
+     gtk4
+     libraw
+```
+```
+git clone https://github.com/RusNor/StartWine-Launcher.git
+cd StartWine-Launcher
+./build help
+```
+```
+-----------------------------------------------------
+USAGE:
+    [./build] [COMMAND] [PATH]
+-----------------------------------------------------
+DEFAULT PATH: /home/$USER
+-----------------------------------------------------
+COMMANDS:
+    all                   Build all ( release source and runtime ).
+    release               Build the release and download the latest runtime.
+    naked                 Build the release without runtime. ( not recommended )
+    rust                  Build only the rust source.
+    python                Build only the python source.
+    runtime               Build only the runtime.
+    download-base         Download the minimal base runtime.
+    download-runtime      Download the latest release runtime.
+    clean                 Remove build files.
+    clean-download        Remove downloaded files.
+    clean-all             Remove all build and downloaded files.
+    help                  Print help.
+    -----------------------------------------------------
+```
+## GUI
 StartWine Screenshots
 
 ![sw_image1](/handbook/en/sw_image1.png)
@@ -79,11 +121,10 @@ StartWine was written from scratch, but using already ready-made components with
 * [GTK 4](https://www.gtk.org/)
 * [Wine-Staging](https://github.com/Kron4ek/Wine-Builds)
 * [Proton GE](https://github.com/GloriousEggroll/proton-ge-custom)
+* [Proton EM](https://github.com/Etaash-mathamsetty/Proton)
 * [Steam Proton](https://github.com/ValveSoftware/Proton)
 * [DXVK](https://github.com/doitsujin/dxvk)
-* [DXVK GE](https://github.com/GloriousEggroll/wine-ge-custom)
 * [VK3D](https://github.com/HansKristian-Work/vkd3d-proton)
-* [VK3D GE](https://github.com/GloriousEggroll/wine-ge-custom)
 * [MangoHud](https://github.com/flightlessmango/MangoHud) (Thanks [VHSgunzo](https://github.com/VHSgunzo) for the patch to work on Nvidia graphics cards!)
 * [vkBasalt](https://github.com/DadSchoorse/vkBasalt)
 * [Mesa](https://www.mesa3d.org/)
@@ -132,7 +173,7 @@ Thank you to everyone who participated in the testing and development of StartWi
 
 The author of the manual > [Lintech](https://www.youtube.com/c/Lintech8)
 
-Website > [Click](https://startwine-launcher.ru/)
+Website > [Click](https://web.startwine-launcher.ru/)
 
 Telegram > [Click](https://t.me/StartWine)
 
