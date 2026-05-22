@@ -20,7 +20,7 @@ fi
 
 #    version
 export SW_GIT_VER="@VERSION@"
-export SW_RUNTIME_GIT_VER="14"
+export SW_RUNTIME_GIT_VER="15"
 
 [ ! -d "${HOME}/.config" ] && \
     mkdir -p "${HOME}/.config"
@@ -357,6 +357,9 @@ if [[ "${SW_RUNTIME_CURRENT_VER}" -lt "${SW_RUNTIME_GIT_VER}" ]]; then
         [ ! -L "${START_WINE_PATH}/data/runtime/sw" ] && \
             ln -sfr "${SW_RUNTIME}" "${START_WINE_PATH}/data/runtime/sw"
 
+        [ ! -L "${START_WINE_PATH}/data/runtime/steam-sw" ] && \
+            ln -sfr "${SW_RUNTIME}" "${START_WINE_PATH}/data/runtime/steam-sw"
+
         echo "${SW_RUNTIME_GIT_VER}" > "${START_WINE_PATH}/data/runtime/version"
         print_info "Download completed successfully"
     else
@@ -371,6 +374,9 @@ if [[ "${SW_CURRENT_VER}" -lt "${SW_GIT_VER}" ]]; then
     [ -L "$HOME/.local/bin/sw" ] && \
         rm "$HOME/.local/bin/sw"
 
+    [ -L "$HOME/.local/bin/steam-sw" ] && \
+        rm "$HOME/.local/bin/steam-sw"
+
     [ -f "${HOME}/.cache/sw_fm/exe_data.json" ] && \
         rm -rf "${HOME}/.cache/sw_fm/exe_data.json"
 
@@ -380,19 +386,20 @@ if [[ "${SW_CURRENT_VER}" -lt "${SW_GIT_VER}" ]]; then
     [ -f "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso" ] && \
         rm -rf "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"
 
-    [ -f "${HOME}/.local/share/applications/StartWine.desktop" ] && \
-        rm -rf "${HOME}/.local/share/applications/StartWine.desktop"
-
-    [ -f "${HOME}/.local/share/applications/StartWineShell.desktop" ] && \
-        rm -rf "${HOME}/.local/share/applications/StartWineShell.desktop"
+    [ -f "${HOME}/.local/share/applications/ru.launcher.Steam-SW.desktop" ] && \
+        rm -rf "${HOME}/.local/share/applications/ru.launcher.Steam-SW.desktop"
 
     [ -f "${HOME}/.local/share/applications/ru.launcher.StartWine.desktop" ] && \
         rm -rf "${HOME}/.local/share/applications/ru.launcher.StartWine.desktop"
 
-    if [ -f "/usr/share/applications/ru.launcher.StartWine.desktop" ]; then
-        cp -f "/usr/share/applications/ru.launcher.StartWine.desktop" && \
-        "${HOME}/.local/share/applications"
-    fi
+    [ -f "${HOME}/.local/share/applications/StartWineShell.desktop" ] && \
+        rm -rf "${HOME}/.local/share/applications/StartWineShell.desktop"
+
+    [ -f "${HOME}/.local/share/applications/ru.launcher.StartWineShell.desktop" ] && \
+        rm -rf "${HOME}/.local/share/applications/ru.launcher.StartWineShell.desktop"
+
+    [ -f "/usr/share/applications/ru.launcher.StartWine.desktop" ] && \
+        cp -f "/usr/share/applications/ru.launcher.StartWine.desktop" "${HOME}/.local/share/applications"
 
     if [ -f "${SW_RUNTIME}" ]; then
 
