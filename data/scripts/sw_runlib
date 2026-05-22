@@ -37,91 +37,77 @@ RESETCOLOR="\033[1;00m"
 
 ##############################   FUNCTIONS TOOLS   #############################
 
-print_error () {
+print_error () { echo -e "${RED}[ ERROR ][$(date +"%Y.%m.%d %T")]: $* $RESETCOLOR" ; }
 
-    echo -e "${RED}[ ERROR ][$(date +"%Y.%m.%d %T")]: $* $RESETCOLOR"
+print_info () { echo -e "${GREEN}[ INFO ][$(date +"%Y.%m.%d %T")]: $* $RESETCOLOR" ; }
 
-}
+print_warning () { echo -e "${YELLOW}[ WARNING ][$(date +"%Y.%m.%d %T")]: $* $RESETCOLOR" ; }
 
-print_info () {
+try_rm_broken_link () { find -L "$1" -maxdepth 1 -type l -exec rm -rfv {} \; 2>/dev/null ; }
 
-    echo -e "${GREEN}[ INFO ][$(date +"%Y.%m.%d %T")]: $* $RESETCOLOR"
-
-}
-
-print_warning () {
-
-    echo -e "${YELLOW}[ WARNING ][$(date +"%Y.%m.%d %T")]: $* $RESETCOLOR"
-
-}
+TRY_REGEDIT_PATCH () { "${WINELOADER}" regedit "${START_WINE_PATH}/data/app_patches/${SW_USE_REGEDIT_PATCH}" "$@" ; }
 
 try_copy () {
 
     if [[ -f "$1" || -d "$1" || -L "$1" ]]; then
-        if cp -rf "$@" 2>/dev/null; then
+        if cp -rf "$1" "$2" 2>/dev/null; then
             return 0
         else
             print_error "Failed to copy '$1' to '$2'"
+            return 1
         fi
-    elif [ -z "$(dirname "$2" 2>/dev/null)" ]; then
-        print_error "Destination path for '$2' not found!"
     else
-        print_error "'$1' not found for copy!"
+        print_error "'$1' Not found for copy!"
+        return 1
     fi
-
-    return 1
 
 }
 
 try_link () {
 
     if [[ -f "$1" || -d "$1" || -L "$1" ]]; then
-        if ln -sfr "$@" 2>/dev/null; then
+        if ln -sfr "$1" "$2" 2>/dev/null; then
             return 0
         else
             print_error "Failed to link '$1' to '$2'"
+            return 1
         fi
-    elif [ -z "$(dirname "$2" 2>/dev/null)" ]; then
-        print_error "Destination path for '$2' not found!"
     else
-        print_error "'$1' not found for link!"
-    fi
-
-    return 1
+        print_error "'$1' Not found for link!"
+        return 1
+   fi
 
 }
 
 try_move () {
 
     if [[ -f "$1" || -d "$1" || -L "$1" ]]; then
-        if mv -f "$@" 2>/dev/null; then
+        if mv -f "$1" "$2" 2>/dev/null; then
             return 0
         else
             print_error "Failed to move '$1' to '$2'"
+            return 1
         fi
-    elif [ -z "$(dirname "$2" 2>/dev/null)" ]; then
-        print_error "Destination path for '$2' not found!"
     else
-        print_error "'$1' not found for move!"
+        print_error "'$1' Not found for move!"
+        return 1
     fi
-
-    return 1
 
 }
 
 try_remove () {
 
     if [[ -f "$1" || -d "$1" || -L "$1" ]]; then
-        if rm -rf "$@" 2>/dev/null; then
+        if rm -rf "$1" 2>/dev/null; then
             return 0
         else
             print_error "Failed to remove '$1'"
+            return 1
         fi
     else
-        print_error "'$1' not found for remove!"
+        print_error "'$1' Not found for remove!"
+        return 1
     fi
-
-    return 1
 
 }
 
@@ -144,6 +130,16 @@ try_winedlloverride_update () {
         export WINEDLLOVERRIDES="${1};${WINEDLLOVERRIDES}"
     else
         export WINEDLLOVERRIDES="${1}"
+    fi
+
+}
+
+try_vk_loader_layers_update () {
+
+    if [ -n "${VK_LOADER_LAYERS_ENABLE}" ]; then
+        export VK_LOADER_LAYERS_ENABLE="${1},${VK_LOADER_LAYERS_ENABLE}"
+    else
+        export VK_LOADER_LAYERS_ENABLE="${1}"
     fi
 
 }
@@ -302,12 +298,6 @@ sw_check_url () {
 
 }
 
-try_rm_broken_link () {
-
-    find -L "$1" -maxdepth 1 -type l -exec rm -rfv {} \; 2>/dev/null
-
-}
-
 try_fix_pfx () {
 
     if [ ! -f "${WINEPREFIX}/drive_c/windows/system32/start.exe" ]; then
@@ -337,7 +327,10 @@ try_fix_pfx () {
         fi
     fi
 
-    [ -d "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/share/default_pfx/drive_c/openxr" ] && \
+    [ ! -f "${WINEPREFIX}/drive_c/openxr/wineopenxr64.json" ] && \
+        try_copy "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/share/openxr" "${WINEPREFIX}/drive_c"
+
+    [ ! -f "${WINEPREFIX}/drive_c/openxr/wineopenxr64.json" ] && \
         try_copy "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/share/default_pfx/drive_c/openxr" "${WINEPREFIX}/drive_c"
 
     if [ -f "${START_WINE_PATH}/data/wine/${SW_USE_WINE}/lib/wine/i386-windows/vrclient.dll" ]; then
@@ -363,7 +356,7 @@ try_fix_pfx () {
         return 1
     fi
 
-    check_wine_drive() { ls -l "$WINEPREFIX/dosdevices"/[a-z]: 2>/dev/null|grep -w "${1}$"|grep -o '[a-z]:' &>/dev/null; }
+    check_wine_drive() { ls -l "$WINEPREFIX/dosdevices"/[a-z]: 2>/dev/null|grep -w "${1}$"|grep -o '[a-z]:' &>/dev/null ; }
 
     try_create_dir "${WINEPREFIX}/dosdevices"
     check_wine_drive 'drive_c' || (rm -f "$DRIVE_C" && try_link "$WINEPREFIX/drive_c" "$DRIVE_C")
@@ -513,33 +506,31 @@ sw_shortcuts_autoinstall () {
 
 try_link_d3d_plugins () {
 
-    if [ "${SW_USE_D3D_PLUGINS}" == 1 ]; then
+    sw_d3d_plugins_list="
+        d3dcompiler_33 d3dcompiler_34 d3dcompiler_35 d3dcompiler_36 d3dcompiler_37
+        d3dcompiler_38 d3dcompiler_39 d3dcompiler_40 d3dcompiler_41 d3dcompiler_42
+        d3dcompiler_43 d3dcompiler_46 d3dcompiler_47
+        d3dx10_33 d3dx10_34 d3dx10_35 d3dx10_36 d3dx10_37 d3dx10_38 d3dx10_39
+        d3dx10_40 d3dx10_41 d3dx10_42 d3dx10_43 d3dx10
+        d3dx11_42 d3dx11_43
+        d3dx9_24 d3dx9_25 d3dx9_26 d3dx9_27 d3dx9_28 d3dx9_29 d3dx9_30
+        d3dx9_31 d3dx9_32 d3dx9_33 d3dx9_34 d3dx9_35 d3dx9_36 d3dx9_37
+        d3dx9_38 d3dx9_39 d3dx9_40 d3dx9_41 d3dx9_42 d3dx9_43
+    "
 
-        for sw_d3d_plugins in d3dcompiler_33 d3dcompiler_34 d3dcompiler_35 \
-            d3dcompiler_36 d3dcompiler_37 d3dcompiler_38 d3dcompiler_39 d3dcompiler_40 \
-            d3dcompiler_41 d3dcompiler_42 d3dcompiler_43 d3dcompiler_46 d3dcompiler_47 \
-            d3dx10_33 d3dx10_34 d3dx10_35 d3dx10_36 d3dx10_37 d3dx10_38 d3dx10_39 d3dx10_40 \
-            d3dx10_41 d3dx10_42 d3dx10_43 d3dx10 d3dx11_42 d3dx11_43 d3dx9_24 d3dx9_25 d3dx9_26 \
-            d3dx9_27 d3dx9_28 d3dx9_29 d3dx9_30 d3dx9_31 d3dx9_32 d3dx9_33 d3dx9_34 d3dx9_35 \
-            d3dx9_36 d3dx9_37 d3dx9_38 d3dx9_39 d3dx9_40 d3dx9_41 d3dx9_42 d3dx9_43 ; do
+    if [ "${SW_USE_D3D_PLUGINS}" == 1 ]; then
+        for sw_d3d_plugins in ${sw_d3d_plugins_list} ; do
 
             [ ! -L "${WINEPREFIX}/drive_c/windows/system32/${sw_d3d_plugins}.dll" ] && \
                 try_link "${START_WINE_PATH}/data/tools/utils/d3d_extras/x64/${sw_d3d_plugins}.dll" "${WINEPREFIX}/drive_c/windows/system32"
             [ ! -L "${WINEPREFIX}/drive_c/windows/syswow64/${sw_d3d_plugins}.dll" ] && \
                 try_link "${START_WINE_PATH}/data/tools/utils/d3d_extras/x32/${sw_d3d_plugins}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
 
-            try_winedlloverride_update "${sw_d3d_plugins}=n"
+            try_winedlloverride_update "${sw_d3d_plugins}=n,b"
         done
     else
-        for sw_d3d_plugins in d3dcompiler_33 d3dcompiler_34 d3dcompiler_35 \
-            d3dcompiler_36 d3dcompiler_37 d3dcompiler_38 d3dcompiler_39 d3dcompiler_40 \
-            d3dcompiler_41 d3dcompiler_42 d3dcompiler_43 d3dcompiler_46 d3dcompiler_47 \
-            d3dx10_33 d3dx10_34 d3dx10_35 d3dx10_36 d3dx10_37 d3dx10_38 d3dx10_39 d3dx10_40 \
-            d3dx10_41 d3dx10_42 d3dx10_43 d3dx10 d3dx11_42 d3dx11_43 d3dx9_24 d3dx9_25 d3dx9_26 \
-            d3dx9_27 d3dx9_28 d3dx9_29 d3dx9_30 d3dx9_31 d3dx9_32 d3dx9_33 d3dx9_34 d3dx9_35 \
-            d3dx9_36 d3dx9_37 d3dx9_38 d3dx9_39 d3dx9_40 d3dx9_41 d3dx9_42 d3dx9_43 ; do
-
-            try_winedlloverride_update "${sw_d3d_plugins}=b"
+        for sw_d3d_plugins in ${sw_d3d_plugins_list} ; do
+            try_winedlloverride_update "${sw_d3d_plugins}=b,n"
         done
     fi
 
@@ -744,12 +735,6 @@ try_update_sw () {
 
 }
 
-TRY_REGEDIT_PATCH () {
-
-    "${WINELOADER}" regedit "${START_WINE_PATH}/data/app_patches/${SW_USE_REGEDIT_PATCH}" "$@"
-
-}
-
 try_download_pfx_dn_default () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx_backup/pfx_dn_default.iso" ]; then
@@ -808,14 +793,9 @@ try_path_update "${WINEDIR}/bin:${WINEDIR}/bin-wow64"
 
 export WINEARCH="${SW_USE_WINEARCH}"
 
-if [ "${SW_USE_WOW64}" == 1 ]; then
-    if [ -f "${WINEDIR}/bin-wow64/wine" ]; then
-        export WINELOADER="${WINEDIR}/bin-wow64/wine"
-        export WINESERVER="${WINEDIR}/bin-wow64/wineserver"
-    else
-        export WINELOADER="${WINEDIR}/bin/wine"
-        export WINESERVER="${WINEDIR}/bin/wineserver"
-    fi
+if [ "${SW_USE_WOW64}" == 1 ] && [ -f "${WINEDIR}/bin-wow64/wine" ]; then
+    export WINELOADER="${WINEDIR}/bin-wow64/wine"
+    export WINESERVER="${WINEDIR}/bin-wow64/wineserver"
 else
     export WINELOADER="${WINEDIR}/bin/wine"
     export WINESERVER="${WINEDIR}/bin/wineserver"
@@ -836,9 +816,6 @@ SW_DESKTOP_DIR="$(xdg-user-dir DESKTOP)"
 export SW_DESKTOP_DIR
 export CRIER="${START_WINE_PATH}/data/scripts/sw_start"
 export SW_RUN_RUNIMAGE="${START_WINE_PATH}/data/runtime/sw"
-
-export STEAM_COMPAT_DATA_PATH="${WINEPREFIX}"
-export STEAM_COMPAT_INSTALL_PATH="${SW_GAME_PATH}"
 
 [ -f "${WINEDIR}/share/media/blank.mkv" ] && \
     export MEDIACONV_BLANK_VIDEO_FILE="${WINEDIR}/share/media/blank.mkv"
@@ -869,8 +846,8 @@ try_create_dir "${START_WINE_PATH}/data/tools/vulkan"
 try_create_dir "${START_WINE_PATH}/data/pfx/pfx_default"
 try_create_dir "${START_WINE_PATH}/data/tmp/vulkan_shader_cache"
 
-[ ! -L "$HOME/.local/bin/sw" ] && \
-    try_link "${START_WINE_PATH}/data/runtime/sw_runtime" "$HOME/.local/bin/sw"
+[ ! -L "${HOME}/.local/bin/sw" ] && \
+    try_link "${START_WINE_PATH}/data/runtime/sw_runtime" "${HOME}/.local/bin/sw"
 
 [ ! -L "${START_WINE_PATH}/data/runtime/sw" ] && \
     try_link "${START_WINE_PATH}/data/runtime/sw_runtime" "${START_WINE_PATH}/data/runtime/sw"
@@ -878,46 +855,78 @@ try_create_dir "${START_WINE_PATH}/data/tmp/vulkan_shader_cache"
 [ ! -f "${START_WINE_PATH}/data/runtime/ssrv" ] && \
     try_copy "/usr/bin/ssrv" "${START_WINE_PATH}/data/runtime"
 
+[ ! -L "${HOME}/.local/bin/steam-sw" ] && \
+    try_link "${START_WINE_PATH}/data/runtime/sw_runtime" "${HOME}/.local/bin/steam-sw"
+
+[ ! -L "${START_WINE_PATH}/data/runtime/steam-sw" ] && \
+    try_link "${START_WINE_PATH}/data/runtime/sw_runtime" "${START_WINE_PATH}/data/runtime/steam-sw"
+
 if [ ! -f "${HOME}/.local/share/applications/ru.launcher.StartWine.desktop" ]; then
     {
         echo "[Desktop Entry]"
         echo "Name=StartWine"
         echo "Exec=env \"${SW_RUN_RUNIMAGE}\" %F"
-        echo "Comment[en_GB]=Launch Windows applications on Linux operating systems"
         echo "Comment[ru]=Запуск приложений Windows в операционных системах Linux"
+        echo "Comment[en_GB]=Launch Windows applications on Linux operating systems"
         echo "Comment[zh_CN]=在Linux操作系统上启动Windows应用程序"
         echo "Comment[pt_PT]=Executando aplicativos do Windows em sistemas operacionais Linux"
         echo "Type=Application"
         echo "MimeType=application/x-wine-extension-msp;application/x-msi;application/x-ms-dos-executable;"
         echo "Categories=Game;"
-        echo "Icon=${START_WINE_PATH}/data/img/gui_icons/sw_icon.svg"
+        echo "Icon=${START_WINE_PATH}/data/img/gui_icons/sw_icon.png"
         echo "Actions=Remove;"
         echo ""
         echo "[Desktop Action Remove]"
         echo "Name=Remove StartWine-Launcher"
         echo "Name[ru]=Удалить StartWine-Launcher"
         echo "Name[zh_CN]=删除 StartWine-Launcher"
-        echo "Name[pt_PT]=[zh_CN]=Remover StartWine-Launcher"
-        echo "Icon=${START_WINE_PATH}/data/img/gui_icons/sw_icon.svg"
+        echo "Name[pt_PT]=Remover StartWine-Launcher"
+        echo "Icon=${START_WINE_PATH}/data/img/gui_icons/sw_icon.png"
         echo "Exec=env \"${SW_RUN_RUNIMAGE}\" --uninstall %F"
     } > "${HOME}/.local/share/applications/ru.launcher.StartWine.desktop"
 fi
 
-if [ ! -f "${HOME}/.local/share/applications/StartWineShell.desktop" ]; then
+if [ ! -f "${HOME}/.local/share/applications/ru.launcher.StartWineShell.desktop" ]; then
     {
         echo "[Desktop Entry]"
         echo "Name=StartWineShell"
         echo "Exec=env \"${SW_RUN_RUNIMAGE}\" --shell %F"
-        echo "Comment[en_GB]=Launch Windows applications on Linux operating systems"
         echo "Comment[ru]=Запуск приложений Windows в операционных системах Linux"
+        echo "Comment[en_GB]=Launch Windows applications on Linux operating systems"
         echo "Comment[zh_CN]=在Linux操作系统上启动Windows应用程序"
         echo "Comment[pt_PT]=Executando aplicativos do Windows em sistemas operacionais Linux"
         echo "Type=Application"
         echo "MimeType=application/x-wine-extension-msp;application/x-msi;application/x-ms-dos-executable;"
         echo "Categories=Game;"
         echo "Terminal=true"
-        echo "Icon=${START_WINE_PATH}/data/img/gui_icons/sw_icon.svg"
-    } > "${HOME}/.local/share/applications/StartWineShell.desktop"
+        echo "Icon=${START_WINE_PATH}/data/img/gui_icons/sw_icon.png"
+    } > "${HOME}/.local/share/applications/ru.launcher.StartWineShell.desktop"
+fi
+
+if [ ! -f "${HOME}/.local/share/applications/ru.launcher.Steam-SW.desktop" ]; then
+    {
+        echo "[Desktop Entry]"
+        echo "Name=Steam-SW"
+        echo "Exec=env \"${START_WINE_PATH}/data/runtime/steam-sw\" %U"
+        echo "Comment[ru]=Приложение для игр и управления играми в Steam"
+        echo "Comment[en_GB]=Application for organizing and running games on Steam"
+        echo "Comment[zh_CN]=管理和进行 Steam 游戏的应用程序"
+        echo "Comment[pt_PT]=Aplicação para organizar e executar jogos no Steam"
+        echo "Type=Application"
+        echo "MimeType=x-scheme-handler/steam;x-scheme-handler/steamlink;"
+        echo "Categories=Game;"
+        echo "Terminal=false"
+        echo "Icon=${START_WINE_PATH}/data/img/gui_icons/steam.png"
+        echo "Actions=BigPicture;"
+        echo "PrefersNonDefaultGPU=true"
+        echo "X-KDE-RunOnDiscreteGpu=true"
+        echo "StartupWMClass=Steam"
+        echo ""
+        echo "[Desktop Action BigPicture]"
+        echo "Name=Steam Big Picture"
+        echo "Exec=env \"${START_WINE_PATH}/data/runtime/steam-sw\" steam://open/bigpicture"
+        echo "Icon=${START_WINE_PATH}/data/img/gui_icons/steam.png"
+    } > "${HOME}/.local/share/applications/ru.launcher.Steam-SW.desktop"
 fi
 
 ############################   SETTINGS OPTIONS   ##############################
@@ -925,15 +934,28 @@ fi
 if [ "${SW_USE_MANGOHUD}" == 1 ]; then
     export MANGOHUD=1
     export MANGOHUD_LOG_LEVEL=off
+    export SW_RUN_MANGOHUD="mangohud"
 
-    if [ "${SW_HUD_SIZE}" == "" ]; then
+    [ "${SW_HUD_SIZE}" == "" ] && \
         SW_HUD_SIZE="$("$CRIER" --hud)"
-        export SW_HUD_SIZE
-    fi
+    export SW_HUD_SIZE
 
-    export MANGOHUD_CONFIG="fps_color_change,round_corners=10,no_display,cpu_load_change,gpu_load_change,core_load_change,background_alpha=0.2\
-    ,font_size=${SW_HUD_SIZE},background_color=020202,fps_limit=${SW_USE_FPS_LIMIT}+0,toggle_fps_limit=Shift_L+F1\
-    ,position=top-right,toggle_hud=Shift_R+F12,${SW_USE_MANGOHUD_CONFIG},toggle_hud_position=R_Shift+F11"
+    export MANGOHUD_CONFIG="fps_color_change,\
+                            round_corners=10,\
+                            no_display,\
+                            cpu_load_change,\
+                            gpu_load_change,\
+                            core_load_change,\
+                            background_alpha=0.2,\
+                            font_size=${SW_HUD_SIZE},\
+                            background_color=020202,\
+                            fps_limit=${SW_USE_FPS_LIMIT}+0,\
+                            toggle_fps_limit=Shift_L+F1,\
+                            position=top-right,\
+                            toggle_hud=Shift_R+F12,\
+                            ${SW_USE_MANGOHUD_CONFIG},\
+                            toggle_hud_position=R_Shift+F11"
+
 fi
 
 if [ "${SW_USE_VIRTUAL_DESKTOP}" == 1 ]; then
@@ -1120,7 +1142,9 @@ if [ "${SW_USE_FSR}" == 1 ]; then
     export FULLSCREEN_PRESERVE_WINDOW_SIZE=1
     export WINE_FULLSCREEN_FSR_MODE="${SW_USE_FSR_MODE}"
 else
-    unset WINE_FULLSCREEN_FSR WINE_FULLSCREEN_FSR_STRENGTH WINE_FULLSCREEN_INTEGER_SCALING WINE_FULLSCREEN_FSR_MODE WINE_FULLSCREEN_FAKE_CURRENT_RES
+    unset WINE_FULLSCREEN_FSR WINE_FULLSCREEN_FSR_STRENGTH \
+    WINE_FULLSCREEN_INTEGER_SCALING WINE_FULLSCREEN_FSR_MODE \
+    WINE_FULLSCREEN_FAKE_CURRENT_RES
 fi
 
 if [ "${SW_USE_HDR}" == 1 ]; then
@@ -1179,18 +1203,19 @@ if [ "${SW_USE_SHADER_CACHE}" == 1 ]; then
 else
     export __GL_SHADER_DISK_CACHE=0
     export MESA_SHADER_CACHE_DISABLE=1
-    unset __GL_SHADER_DISK_CACHE_SIZE __GL_SHADER_DISK_CACHE_PATH MESA_DISK_CACHE_SINGLE_FILE MESA_SHADER_CACHE_SIZE MESA_SHADER_CACHE_DIR
+    unset __GL_SHADER_DISK_CACHE_SIZE __GL_SHADER_DISK_CACHE_PATH \
+    MESA_DISK_CACHE_SINGLE_FILE MESA_SHADER_CACHE_SIZE MESA_SHADER_CACHE_DIR
 fi
 
 ###############################   OVERRIDE DLL   ###############################
 
-try_winedlloverride_update "winhttp=n,b"
+try_winedlloverride_update "lsteamclient,winemenubuilder.exe,winebth.sys=d"
 
-try_winedlloverride_update "lsteamclient,winemenubuilder.exe=d"
+try_winedlloverride_update "steam_api,steam_api64,steamclient,steamclient64,winhttp,winmm=n,b"
 
-try_winedlloverride_update "steam_api,steam_api64,steamclient,steamclient64,icu=n"
+#try_winedlloverride_update "steam_api,steam_api64,steamclient,steamclient64,winhttp,winmm,icuuc68,icuin68,icudt68=n,b"
 
-try_winedlloverride_update "dotnetfx35.exe,dotnetfx35setup.exe,winebth.sys=b"
+try_winedlloverride_update "dotnetfx35.exe,dotnetfx35setup.exe=b,n"
 
 #try_winedlloverride_update "GameOverlayRenderer64,GameOverlayRenderer,SteamOverlayVulkanLayer64,SteamOverlayVulkanLayer=d"
 
@@ -1352,62 +1377,63 @@ create_backup() {
 
 RUN_VULKAN () {
 
+    try_fix_pfx
+    sw_win_ver
+    try_link_d3d_plugins
+
+    [ -n "${SW_USE_LANG_MODE}" ] && \
+        export LANG="${SW_USE_LANG_MODE}"
+
+    for wine_vkd3d_dll in libvkd3d-1 libvkd3d-shader-1 ; do
+        try_remove "${WINEPREFIX}/drive_c/windows/syswow64/${wine_vkd3d_dll}.dll"
+        try_remove "${WINEPREFIX}/drive_c/windows/system32/${wine_vkd3d_dll}.dll"
+
+        if [ -d "${WINEDIR}/lib64" ]; then
+            try_copy "${WINEDIR}/lib/vkd3d/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+            try_copy "${WINEDIR}/lib64/vkd3d/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+        else
+            try_copy "${WINEDIR}/lib/vkd3d/i386-windows/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+            try_copy "${WINEDIR}/lib/vkd3d/x86_64-windows/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+        fi
+    done
+
+    if [ -d "${WINEDIR}/lib/wine/icu" ]; then
+        for wine_dll in icuin68 icuuc68 icudt68 ; do
+            try_remove "${WINEPREFIX}/drive_c/windows/syswow64/${wine_dll}.dll"
+            try_remove "${WINEPREFIX}/drive_c/windows/system32/${wine_dll}.dll"
+
+            try_copy "${WINEDIR}/lib/wine/icu/i386-windows/${wine_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+            try_copy "${WINEDIR}/lib/wine/icu/x86_64-windows/${wine_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+        done
+    fi
+
     if [ "${SW_USE_OPENGL}" == "1" ]; then
-
-        try_fix_pfx
-
-        sw_win_ver
-
-        try_link_d3d_plugins
 
         unset VK_INSTANCE_LAYERS VK_LOADER_LAYERS_ENABLE
 
         for wine_build_dll in d3d12 d3d11 d3d10 d3d10core d3d10_1 d3d9 d3d8 dxgi ; do
+            try_remove "${WINEPREFIX}/drive_c/windows/syswow64/${wine_build_dll}.dll"
+            try_remove "${WINEPREFIX}/drive_c/windows/system32/${wine_build_dll}.dll"
+
             if [ -d "${WINEDIR}/lib64" ]; then
-                [ -f "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" ] && \
-                    try_link "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                [ -f "${WINEDIR}/lib64/wine/x86_64-windows/${wine_build_dll}.dll" ] && \
-                    try_link "${WINEDIR}/lib64/wine/x86_64-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                try_copy "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+                try_copy "${WINEDIR}/lib64/wine/x86_64-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
             else
-                [ -f "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" ] && \
-                    try_link "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                [ -f "${WINEDIR}/lib/wine/x86_64-windows/${wine_build_dll}.dll" ] && \
-                    try_link "${WINEDIR}/lib/wine/x86_64-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                try_copy "${WINEDIR}/lib/wine/i386-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+                try_copy "${WINEDIR}/lib/wine/x86_64-windows/${wine_build_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
             fi
         done
 
-        for wine_vkd3d_dll in libvkd3d-1 libvkd3d-shader-1 ; do
-            if [ -d "${WINEDIR}/lib64" ]; then
-                [ -f "${WINEDIR}/lib/vkd3d/${wine_vkd3d_dll}.dll" ] && \
-                    try_link "${WINEDIR}/lib/vkd3d/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                [ -f "${WINEDIR}/lib64/vkd3d/${wine_vkd3d_dll}.dll" ] && \
-                    try_link "${WINEDIR}/lib64/vkd3d/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
-            else
-                [ -f "${WINEDIR}/lib/vkd3d/i386-windows/${wine_vkd3d_dll}.dll" ] && \
-                    try_link "${WINEDIR}/lib/vkd3d/i386-windows/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                [ -f "${WINEDIR}/lib/vkd3d/x86_64-windows/${wine_vkd3d_dll}.dll" ] && \
-                    try_link "${WINEDIR}/lib/vkd3d/x86_64-windows/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
-            fi
-        done
-
-        try_winedlloverride_update "d3d12,d3d11,d3d10,d3d10core,d3d10_1,d3d9,d3d8,dxgi=b"
-
-        try_winedlloverride_update "openvr_api_dxvk,d3d12core=d"
+        try_winedlloverride_update "d3d12,d3d11,d3d10,d3d10core,d3d10_1,d3d9,d3d8,dxgi=b,n"
 
         print_info "OpenGL API is used"
 
         notify-send -t 1500 -a "StartWine" "$(eval_gettext "OpenGL mode")"
 
-        [ "${SW_USE_MANGOHUD}" == 1 ] && \
-            export SW_RUN_MANGOHUD="mangohud --dlsym"
-
         if [ "${SW_USE_GALLIUM_HUD}" == 1 ]; then
             export GALLIUM_HUD_PERIOD=0.1
             export GALLIUM_HUD=".d.w320fps+.d.w320frametime+.d.w320cpu+.d.w320GPU-load+.d.w320memory-clock+.d.w320VRAM-usage+.d.w320temperature"
         fi
-
-        [ -n "${SW_USE_LANG_MODE}" ] && \
-            export LANG="${SW_USE_LANG_MODE}"
 
         cd "${SW_GAME_PATH}" || exit 0
 
@@ -1422,143 +1448,53 @@ RUN_VULKAN () {
 
     else
 
-        try_fix_pfx
+        if [ "${SW_USE_DXVK_GE}" == "1" ] && [ -d "${WINEDIR}/lib/wine/dxvk" ]; then
+            for wine_dxvk_dll in d3d11 d3d10core d3d9 d3d8 dxgi ; do
+                try_remove "${WINEPREFIX}/drive_c/windows/syswow64/${wine_dxvk_dll}.dll"
+                try_remove "${WINEPREFIX}/drive_c/windows/system32/${wine_dxvk_dll}.dll"
 
-        sw_win_ver
-
-        try_link_d3d_plugins
-
-        if [ "${SW_USE_DXVK_GE}" == "1" ]; then
-            if [ -d "${WINEDIR}/lib/wine/dxvk" ]; then
-                for wine_dxvk_dll in openvr_api_dxvk d3d11 d3d10 d3d10core d3d10_1 d3d9 d3d8 dxgi ; do
-                    if [ -d "${WINEDIR}/lib64" ]; then
-                        [ -f "${WINEDIR}/lib/wine/dxvk/${wine_dxvk_dll}.dll" ] && \
-                            try_link "${WINEDIR}/lib/wine/dxvk/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                        [ -f "${WINEDIR}/lib64/wine/dxvk/${wine_dxvk_dll}.dll" ] && \
-                            try_link "${WINEDIR}/lib64/wine/dxvk/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
-                    else
-                        [ -f "${WINEDIR}/lib/wine/dxvk/i386-windows/${wine_dxvk_dll}.dll" ] && \
-                            try_link "${WINEDIR}/lib/wine/dxvk/i386-windows/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                        [ -f "${WINEDIR}/lib/wine/dxvk/x86_64-windows/${wine_dxvk_dll}.dll" ] && \
-                            try_link "${WINEDIR}/lib/wine/dxvk/x86_64-windows/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
-                    fi
-                done
-            else
-                for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 d3d8 dxgi ; do
-                    [ -f "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x32/${wine_dxvk_dll}.dll" ] && \
-                        try_link "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                    [ -f "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x64/${wine_dxvk_dll}.dll" ] && \
-                        try_link "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x64/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
-                done
-            fi
-        else
-            for wine_dxvk_dll in d3d11 d3d10 d3d10core d3d10_1 d3d9 d3d8 dxgi ; do
-                [ -f "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x32/${wine_dxvk_dll}.dll" ] && \
-                    try_link "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                [ -f "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x64/${wine_dxvk_dll}.dll" ] && \
-                    try_link "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x64/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
-            done
-        fi
-
-        if [ "${SW_USE_VKD3D_GE}" == "1" ]; then
-            if [ -d "${WINEDIR}/lib/wine/vkd3d-proton" ]; then
-                for wine_vkd3d_dll in d3d12 d3d12core ; do
-                    if [ -d "${WINEDIR}/lib64" ]; then
-                        try_link "${WINEDIR}/lib/wine/vkd3d-proton/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                        try_link "${WINEDIR}/lib64/wine/vkd3d-proton/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
-                    else
-                        try_link "${WINEDIR}/lib/wine/vkd3d-proton/i386-windows/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                        try_link "${WINEDIR}/lib/wine/vkd3d-proton/x86_64-windows/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
-                    fi
-                done
-
-                for wine_vkd3d_dll in libvkd3d-1 libvkd3d-shader-1 ; do
-                    if [ -d "${WINEDIR}/lib64" ]; then
-                        [ -f "${WINEDIR}/lib/vkd3d/${wine_vkd3d_dll}.dll" ] && \
-                            try_link "${WINEDIR}/lib/vkd3d/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                        [ -f "${WINEDIR}/lib64/vkd3d/${wine_vkd3d_dll}.dll" ] && \
-                            try_link "${WINEDIR}/lib64/vkd3d/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
-                    else
-                        [ -f "${WINEDIR}/lib/vkd3d/i386-windows/${wine_vkd3d_dll}.dll" ] && \
-                            try_link "${WINEDIR}/lib/vkd3d/i386-windows/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                        [ -f "${WINEDIR}/lib/vkd3d/x86_64-windows/${wine_vkd3d_dll}.dll" ] && \
-                            try_link "${WINEDIR}/lib/vkd3d/x86_64-windows/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
-                    fi
-                done
-            else
-                if [ ! -f "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x86/d3d12core.dll" ]; then
-                    try_link "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x86/d3d12.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                    try_link "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x64/d3d12.dll" "${WINEPREFIX}/drive_c/windows/system32"
-                    try_link "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x86/d3d12.dll" "${WINEPREFIX}/drive_c/windows/syswow64/d3d12core.dll"
-                    try_link "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x64/d3d12.dll" "${WINEPREFIX}/drive_c/windows/system32/d3d12core.dll"
-                else
-                    for wine_vkd3d_dll in d3d12 d3d12core ; do
-                        try_link "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                        try_link "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x64/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
-                    done
-                fi
-
-                for wine_vkd3d_dll in libvkd3d-1 libvkd3d-shader-1 ; do
-                    if [ -d "${WINEDIR}/lib64" ]; then
-                        [ -f "${WINEDIR}/lib/vkd3d/${wine_vkd3d_dll}.dll" ] && \
-                            try_link "${WINEDIR}/lib/vkd3d/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                        [ -f "${WINEDIR}/lib64/vkd3d/${wine_vkd3d_dll}.dll" ] && \
-                            try_link "${WINEDIR}/lib64/vkd3d/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
-                    else
-                        [ -f "${WINEDIR}/lib/vkd3d/i386-windows/${wine_vkd3d_dll}.dll" ] && \
-                            try_link "${WINEDIR}/lib/vkd3d/i386-windows/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                        [ -f "${WINEDIR}/lib/vkd3d/x86_64-windows/${wine_vkd3d_dll}.dll" ] && \
-                            try_link "${WINEDIR}/lib/vkd3d/x86_64-windows/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
-                    fi
-                done
-            fi
-        else
-            if [ ! -f "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x86/d3d12core.dll" ]; then
-                try_link "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x86/d3d12.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                try_link "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x64/d3d12.dll" "${WINEPREFIX}/drive_c/windows/system32"
-                try_link "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x86/d3d12.dll" "${WINEPREFIX}/drive_c/windows/syswow64/d3d12core.dll"
-                try_link "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x64/d3d12.dll" "${WINEPREFIX}/drive_c/windows/system32/d3d12core.dll"
-            else
-                for wine_vkd3d_dll in d3d12 d3d12core ; do
-                    try_link "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                    try_link "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x64/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
-                done
-            fi
-
-            for wine_vkd3d_dll in libvkd3d-1 libvkd3d-shader-1 ; do
                 if [ -d "${WINEDIR}/lib64" ]; then
-                    [ -f "${WINEDIR}/lib/vkd3d/${wine_vkd3d_dll}.dll" ] && \
-                        try_link "${WINEDIR}/lib/vkd3d/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                    [ -f "${WINEDIR}/lib64/vkd3d/${wine_vkd3d_dll}.dll" ] && \
-                        try_link "${WINEDIR}/lib64/vkd3d/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                    try_copy "${WINEDIR}/lib/wine/dxvk/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+                    try_copy "${WINEDIR}/lib64/wine/dxvk/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
                 else
-                    [ -f "${WINEDIR}/lib/vkd3d/i386-windows/${wine_vkd3d_dll}.dll" ] && \
-                        try_link "${WINEDIR}/lib/vkd3d/i386-windows/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                    [ -f "${WINEDIR}/lib/vkd3d/x86_64-windows/${wine_vkd3d_dll}.dll" ] && \
-                        try_link "${WINEDIR}/lib/vkd3d/x86_64-windows/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                    try_copy "${WINEDIR}/lib/wine/dxvk/i386-windows/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+                    try_copy "${WINEDIR}/lib/wine/dxvk/x86_64-windows/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
                 fi
             done
-        fi
+        else
+            for wine_dxvk_dll in d3d11 d3d10core d3d9 d3d8 dxgi ; do
+                try_remove "${WINEPREFIX}/drive_c/windows/syswow64/${wine_dxvk_dll}.dll"
+                try_remove "${WINEPREFIX}/drive_c/windows/system32/${wine_dxvk_dll}.dll"
 
-        if [ -d "${WINEDIR}/lib/wine/icu" ]; then
-            for wine_dll in icuin68 icuuc68 icudt68 ; do
-                try_link "${WINEDIR}/lib/wine/icu/i386-windows/${wine_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
-                try_link "${WINEDIR}/lib/wine/icu/x86_64-windows/${wine_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
-                try_winedlloverride_update "icuin68,icuuc68,icudt68=n"
+                try_copy "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x32/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+                try_copy "${START_WINE_PATH}/data/tools/vulkan/dxvk-${DXVK_VER}/x64/${wine_dxvk_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
             done
         fi
 
-        export SW_USE_GSTREAMER=0
+        if [ "${SW_USE_VKD3D_GE}" == "1" ] && [ -d "${WINEDIR}/lib/wine/vkd3d-proton" ]; then
+            for wine_vkd3d_dll in d3d12 d3d12core ; do
+                try_remove "${WINEPREFIX}/drive_c/windows/syswow64/${wine_vkd3d_dll}.dll"
+                try_remove "${WINEPREFIX}/drive_c/windows/system32/${wine_vkd3d_dll}.dll"
 
-        if [ "${SW_USE_GSTREAMER}" == 1 ]; then
-            if [ -d "${WINEDIR}/lib64" ]; then
-                export GST_PLUGIN_SYSTEM_PATH_1_0="${WINEDIR}/lib64/gstreamer-1.0:${WINEDIR}/lib/gstreamer-1.0"
-            else
-                export GST_PLUGIN_SYSTEM_PATH_1_0="${WINEDIR}/lib/x86_64-linux-gnu/gstreamer-1.0:${WINEDIR}/lib/i386-linux-gnu/gstreamer-1.0"
-            fi
+                if [ -d "${WINEDIR}/lib64" ]; then
+                    try_copy "${WINEDIR}/lib/wine/vkd3d-proton/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+                    try_copy "${WINEDIR}/lib64/wine/vkd3d-proton/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                else
+                    try_copy "${WINEDIR}/lib/wine/vkd3d-proton/i386-windows/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+                    try_copy "${WINEDIR}/lib/wine/vkd3d-proton/x86_64-windows/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+                fi
+            done
+        else
+            for wine_vkd3d_dll in d3d12 d3d12core ; do
+                try_remove "${WINEPREFIX}/drive_c/windows/syswow64/${wine_vkd3d_dll}.dll"
+                try_remove "${WINEPREFIX}/drive_c/windows/system32/${wine_vkd3d_dll}.dll"
+
+                try_copy "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x86/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/syswow64"
+                try_copy "${START_WINE_PATH}/data/tools/vulkan/vkd3d-proton-${VKD3D_VER}/x64/${wine_vkd3d_dll}.dll" "${WINEPREFIX}/drive_c/windows/system32"
+            done
         fi
 
-        try_winedlloverride_update "libvkd3d-1,libvkd3d-shader-1,d3d12,d3d12core,openvr_api_dxvk,d3d11,d3d10,d3d10core,d3d10_1,d3d9,d3d8,dxgi=n"
+        try_winedlloverride_update "d3d12,d3d12core,d3d11,d3d10core,d3d9,d3d8,dxgi=n,b"
 
         if [ "${SW_USE_SHADER_CACHE}" == 1 ]; then
             try_create_dir "${START_WINE_PATH}/data/tmp/vulkan_shader_cache/${SW_GAME_NAME}"
@@ -1578,7 +1514,9 @@ RUN_VULKAN () {
         else
             export DXVK_STATE_CACHE=0
             export DXVK_SHADER_CACHE=0
-            unset DXVK_CONFIG_FILE DXVK_STATE_CACHE_PATH DXVK_SHADER_CACHE_PATH DXVK_LOG_LEVEL DXVK_LOG_PATH VKD3D_SHADER_CACHE_PATH VKD3D_FEATURE_LEVEL VKD3D_SHADER_DEBUG VKD3D_DEBUG DXVK_DEBUG
+            unset DXVK_CONFIG_FILE DXVK_STATE_CACHE_PATH DXVK_SHADER_CACHE_PATH \
+            DXVK_LOG_LEVEL DXVK_LOG_PATH VKD3D_SHADER_CACHE_PATH VKD3D_FEATURE_LEVEL \
+            VKD3D_SHADER_DEBUG VKD3D_DEBUG DXVK_DEBUG
         fi
 
         print_info "Vulkan API is used"
@@ -1587,16 +1525,11 @@ RUN_VULKAN () {
 
         if [ "${SW_USE_MESA_OVERLAY_HUD}" == 1 ]; then
             export VK_LAYER_MESA_OVERLAY_CONFIG="output_file=${START_WINE_PATH}/data/tmp/stats/${SW_GAME_NAME}.txt"
-            export VK_LOADER_LAYERS_ENABLE="${VK_LOADER_LAYERS_ENABLE},VK_LAYER_MESA_overlay"
-            export VK_INSTANCE_LAYERS="${VK_INSTANCE_LAYERS}:VK_LAYER_MESA_overlay"
+            try_vk_loader_layers_update "VK_LAYER_MESA_overlay"
         else
             export VK_LAYER_MESA_OVERLAY_CONFIG="no_display=1,output_file=${START_WINE_PATH}/data/tmp/stats/${SW_GAME_NAME}.txt"
-            export VK_LOADER_LAYERS_ENABLE="${VK_LOADER_LAYERS_ENABLE},VK_LAYER_MESA_overlay"
-            export VK_INSTANCE_LAYERS="${VK_INSTANCE_LAYERS}:VK_LAYER_MESA_overlay"
+            try_vk_loader_layers_update "VK_LAYER_MESA_overlay"
         fi
-
-        [ -n "${SW_USE_LANG_MODE}" ] && \
-            export LANG="${SW_USE_LANG_MODE}"
 
         cd "${SW_GAME_PATH}" || exit 0
 
@@ -2032,6 +1965,7 @@ WINE_1 () {
 
         sw_check_url
 
+        try_remove "${START_WINE_PATH}/data/wine/wine-${STAG_VER}-staging-amd64"
         try_remove "${START_WINE_PATH}/data/tmp/wine-${STAG_VER}-staging-amd64.tar.xz"
 
         if "$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/wine-${STAG_VER}-staging-amd64.tar.xz"; then
@@ -2074,16 +2008,20 @@ WINE_2 () {
 
         sw_check_url
 
+        try_remove "${START_WINE_PATH}/data/wine/steam-proton-${SP_VER}"
         try_remove "${START_WINE_PATH}/data/tmp/steam-proton-${SP_VER}.tar.xz"
 
         if "$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/steam-proton-${SP_VER}.tar.xz"; then
             "$CRIER" --tar "${START_WINE_PATH}/data/tmp/steam-proton-${SP_VER}.tar.xz" "${START_WINE_PATH}/data/wine"
             chmod -R 775 "${START_WINE_PATH}/data/wine/steam-proton-${SP_VER}"
-            try_create_dir "${START_WINE_PATH}/data/wine/steam-proton-${SP_VER}/files"
 
-            for copy_dir in bin bin-wow64 lib lib64 share ; do
-                try_move "${START_WINE_PATH}/data/wine/steam-proton-${SP_VER}/${copy_dir}" "${START_WINE_PATH}/data/wine/steam-proton-${SP_VER}/files"
-            done
+            if [ ! -d "${START_WINE_PATH}/data/wine/steam-proton-${SP_VER}/files" ]; then
+                try_create_dir "${START_WINE_PATH}/data/wine/steam-proton-${SP_VER}/files"
+
+                for move_dir in bin bin-wow64 lib lib64 share ; do
+                    try_move "${START_WINE_PATH}/data/wine/steam-proton-${SP_VER}/${move_dir}" "${START_WINE_PATH}/data/wine/steam-proton-${SP_VER}/files"
+                done
+            fi
 
             for link_dir in bin bin-wow64 lib lib64 share ; do
                 try_link "${START_WINE_PATH}/data/wine/steam-proton-${SP_VER}/files/${link_dir}" "${START_WINE_PATH}/data/wine/steam-proton-${SP_VER}"
@@ -2124,6 +2062,7 @@ WINE_3 () {
 
         sw_check_url
 
+        try_remove "${START_WINE_PATH}/data/wine/GE-Proton${GE_VER}"
         try_remove "${START_WINE_PATH}/data/tmp/GE-Proton${GE_VER}.tar.gz"
 
         if "$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/GE-Proton${GE_VER}.tar.gz"; then
@@ -2173,6 +2112,7 @@ WINE_4 () {
 
         sw_check_url
 
+        try_remove "${START_WINE_PATH}/data/wine/wine-${STAG_VER}-staging-tkg-amd64"
         try_remove "${START_WINE_PATH}/data/tmp/wine-${STAG_VER}-staging-tkg-amd64.tar.xz"
 
         if "$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/wine-${STAG_VER}-staging-tkg-amd64.tar.xz"; then
@@ -2214,6 +2154,7 @@ WINE_5 () {
 
         sw_check_url
 
+        try_remove "${START_WINE_PATH}/data/wine/proton-EM-${EM_VER}"
         try_remove "${START_WINE_PATH}/data/tmp/proton-EM-${EM_VER}.tar.xz"
 
         if "$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/proton-EM-${EM_VER}.tar.xz"; then
@@ -2751,13 +2692,13 @@ INSTALL_STEAM () {
 
     if [ ! -f "${START_WINE_PATH}/data/pfx/pfx_steam/drive_c/Program Files (x86)/Steam/steam.exe" ]; then
 
-        STAG_VER="11.6"
+        STAG_VER="11.9"
         WINE_OK=1
         WINE_4
 
         export SW_USE_PFX="pfx_steam"
         export WINEPREFIX="${START_WINE_PATH}/data/pfx/${SW_USE_PFX}"
-        export WINEDIR="${START_WINE_PATH}/data/wine/GE-Proton${GE_VER}"
+        export WINEDIR="${START_WINE_PATH}/data/wine/wine-${STAG_VER}-staging-tkg-amd64"
         export WINELOADER="${WINEDIR}/bin/wine"
         export WINESERVER="${WINEDIR}/bin/wineserver"
 
@@ -2765,6 +2706,7 @@ INSTALL_STEAM () {
         unsquashfs -d "${START_WINE_PATH}/data/pfx/${SW_USE_PFX}" "${START_WINE_PATH}/data/pfx_backup/pfx_default.iso"
 
 #       "${WINELOADER}" regedit "${START_WINE_PATH}/data/app_patches/Steam_patch.reg"
+#        try_remove "${WINEPREFIX}/.update-timestamp"
 
         export FTP_URL=(
             "https://startwine-launcher.ru/StartWine-data/Autoinstal-Launchers-Data/Steam.tar.xz"

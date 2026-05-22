@@ -10,8 +10,10 @@ if [ "$(echo "$crier" | tail -1)" == "0" ]; then
 
     try_remove "${HOME}/.config/swrc"
     try_remove "${HOME}/.local/bin/sw"
+    try_remove "${HOME}/.local/bin/steam-sw"
+    try_remove "${HOME}/.local/share/applications/ru.launcher.Steam-SW.desktop"
     try_remove "${HOME}/.local/share/applications/ru.launcher.StartWine.desktop"
-    try_remove "${HOME}/.local/share/applications/StartWineShell.desktop"
+    try_remove "${HOME}/.local/share/applications/ru.launcher.StartWineShell.desktop"
 
     if try_remove "${START_WINE_PATH}"; then
         [ -n "$(command -v "notify-send")" ] && \
