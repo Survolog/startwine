@@ -156,6 +156,7 @@ StartWine was written from scratch, but using already ready-made components with
 - Kot41ru
 - Fanchji (Vitaly)
 - Survolog
+- SeKToR
 - Lex
 - Lintech
 - Sheridan
