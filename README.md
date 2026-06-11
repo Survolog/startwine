@@ -143,14 +143,12 @@ StartWine was written from scratch, but using already ready-made components with
 
 > **Created and helped write code**
 
-- [Rustam Normatov](https://github.com/RusNor)
-- [Nikita Maslov](https://github.com/nix-on-nix)
 - [Maxim Tarasov](https://github.com/VHSgunzo)
 
-> **Participants in the project**
+> **StartWine Community**
 
-- StartWine Community
 - Андрей
+- Aleksandr Shamaraev
 - 3y6HuK
 - Alexandrdrdr
 - Huskysoul
@@ -158,6 +156,7 @@ StartWine was written from scratch, but using already ready-made components with
 - Kot41ru
 - Fanchji (Vitaly)
 - Survolog
+- SeKToR
 - Lex
 - Lintech
 - Sheridan
