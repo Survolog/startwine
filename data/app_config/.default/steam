@@ -51,7 +51,7 @@ export SW_USE_VKBASALT_CAS="0.5"
 export SW_USE_FPS_LIMIT="0.0"
 export SW_USE_BACKUP_UPDATE_PERIOD=5
 export SW_USE_MANGOHUD_CONFIG="winesync,cpu_temp,ram,core_load,cpu_mhz,wine,gpu_temp,gpu_core_clock,vram"
-export SW_USE_WINE="wine-11.9-staging-tkg-amd64"
+export SW_USE_WINE="wine-11.10-staging-amd64"
 export SW_USE_PFX="pfx_steam"
 ################################  USER CONFIG   ################################
 

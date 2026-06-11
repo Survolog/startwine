@@ -2855,7 +2855,7 @@ def add_shortcut_to_desktop(custom_name, custom_path):
 
 def on_regedit_patch():
     """___registry patch for current prefix___"""
-    echo_func_name("TRY_REGEDIT_PATCH")
+    echo_func_name("try_regedit_patch")
 
 
 def check_sw_update():

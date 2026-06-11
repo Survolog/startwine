@@ -1,5 +1,9 @@
 This release adds the following features, updates, and fixes:
 • Updated list of Wine versions.
+• Updated prefix configurations.
 • Libraries and drivers have been updated in the container.
 • Fixed installation script.
-• Added Steam (native) running in a container, and the Steam-SW launch icon.
+• Fixed update installed application data.
+• Fixed helper functions in sw_runlib.
+• Steam libraries have been added to utils for compatibility with older games.
+

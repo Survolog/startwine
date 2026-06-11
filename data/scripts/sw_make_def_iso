@@ -1,28 +1,29 @@
 #!/usr/bin/env bash
 
+clear
 unset VK_INSTANCE_LAYERS VK_LOADER_LAYERS_ENABLE
 
-try_remove "${START_WINE_PATH}/data/scripts/winetricks"
+# new или old
+export MAKE_PFX_ISO="new"
 
-export FTP_URL="https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks"
+# ge или em или ws
+export SW_MAKE_USE_WINE="ge"
 
-sw_check_url
-
-"$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/scripts/winetricks" && \
-chmod +x "${START_WINE_PATH}/data/scripts/winetricks"
-
-export SW_MAKE_PFX_ON_GE=1
-
-if [ "${SW_MAKE_PFX_ON_GE}" == 1 ]; then
+if [[ "${SW_MAKE_USE_WINE}" == "ge" ]]; then
     GE_VER="10-34"
     WINE_OK=1
     WINE_3
     USE_WINE_BUILD="GE-Proton${GE_VER}"
-else
-    STAG_VER="11.9"
+elif [[ "${SW_MAKE_USE_WINE}" == "em" ]]; then
+    EM_VER="10.0-34"
     WINE_OK=1
-    WINE_4
-    USE_WINE_BUILD="wine-${STAG_VER}-staging-tkg-amd64"
+    WINE_5
+    USE_WINE_BUILD="proton-EM-${EM_VER}"
+elif [[ "${SW_MAKE_USE_WINE}" == "ws" ]]; then
+    STAG_VER="11.10"
+    WINE_OK=1
+    WINE_1
+    USE_WINE_BUILD="wine-${STAG_VER}-staging-amd64"
 fi
 
 export WINEARCH="win64"
@@ -33,27 +34,66 @@ export WINELOADER="${WINEDIR}/bin/wine"
 export WINESERVER="${WINEDIR}/bin/wineserver"
 export WINE="${WINELOADER}"
 
+try_remove "${HOME}/.cache/winetricks"
 try_remove "${START_WINE_PATH}/data/pfx/pfx_default"
+try_remove "${START_WINE_PATH}/data/scripts/winetricks"
+try_remove "${START_WINE_PATH}/data/tmp/pfx_default.iso"
 
-#    dotnet20sp2 dotnet35sp1 dotnet48 lavfilters
-
-"${START_WINE_PATH}/data/scripts/winetricks" -q -f corefonts lucida mfc120 mfc42 msvcirt openal physx vb6run \
-vcrun2005 vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2022 vcrun6 vcrun6sp6 nocrashdialog || libraries_init_error
-"${WINESERVER}" -w
-
-"${WINE}" regedit "${START_WINE_PATH}/data/app_patches/make_def_iso_patch.reg" "$@"
-"${WINESERVER}" -w
-
-export FTP_URL="http://legionfonts.com/storage/archives/Segoe%20Script.zip"
-
+export FTP_URL="https://raw.githubusercontent.com/Winetricks/winetricks/master/src/winetricks"
 sw_check_url
 
-"$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/SegoeScript.zip" && \
-"$CRIER" --zip "${START_WINE_PATH}/data/tmp/SegoeScript.zip" "${START_WINE_PATH}/data/tmp" && \
-try_move "${START_WINE_PATH}/data/tmp/Segoe Script.ttf" "$WINEPREFIX/drive_c/windows/Fonts/segoe script.ttf"
-try_remove "${START_WINE_PATH}/data/tmp/SegoeScript.zip"
+if "$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/scripts/winetricks" ; then
+    chmod +x "${START_WINE_PATH}/data/scripts/winetricks"
+else
+    print_warning "Ошибка загрузки winetricks"
+    return 1
+fi
 
-################################################################################
+if "${WINE}" wineboot -u ; then
+    if [ "${MAKE_PFX_ISO}" == "new" ]; then
+        echo "====================================================================="
+        echo "        НАСТРОЙКА ПРЕФИКСА ДЛЯ СОВРЕМЕННЫХ ИГР (64-бит)"
+        echo "====================================================================="
+
+        "${START_WINE_PATH}/data/scripts/winetricks" -q -f corefonts lucida mfc120 mfc42 openal physx vcrun2005 vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun2022 nocrashdialog \
+        || print_warning "Ошибка создания modern префикса"
+        "${WINESERVER}" -w
+
+#         Интегрируем библиотеки интерфейса и рантайма старых игр напрямую в систему чтобы они не конфликтовали с основным пакетом vcrun2022
+#        "${START_WINE_PATH}/data/scripts/winetricks" -q msvcirt || print_warning "Ошибка установки msvcirt"
+#        "${WINESERVER}" -w
+    elif [ "${MAKE_PFX_ISO}" == "old" ]; then
+         echo "====================================================================="
+         echo "         НАСТРОЙКА ПРЕФИКСА ДЛЯ СТАРЫХ ИГР (32-бит)"
+         echo "====================================================================="
+
+        "${START_WINE_PATH}/data/scripts/winetricks" -q -f corefonts lucida mfc120 mfc42 msvcirt openal physx vb6run vcrun2005 vcrun2008 vcrun2010 vcrun2012 vcrun2013 vcrun6 nocrashdialog \
+        || print_warning "Ошибка создания legacy префикса"
+        "${WINESERVER}" -w
+    fi
+
+    "${WINE}" regedit "${START_WINE_PATH}/data/app_patches/make_def_iso_patch.reg"
+    "${WINESERVER}" -w
+else
+    print_warning "Ошибка создания предварительного префикса"
+    return 1
+fi
+
+export FTP_URL="http://legionfonts.com/storage/archives/Segoe%20Script.zip"
+sw_check_url
+
+if "$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/SegoeScript.zip" ; then
+    if "$CRIER" --zip "${START_WINE_PATH}/data/tmp/SegoeScript.zip" "${START_WINE_PATH}/data/tmp" ; then
+        try_move "${START_WINE_PATH}/data/tmp/Segoe Script.ttf" "$WINEPREFIX/drive_c/windows/Fonts/segoe script.ttf"
+        try_remove "${START_WINE_PATH}/data/tmp/SegoeScript.zip"
+    else
+        print_warning "Ошибка распаковки SegoeScript.zip"
+        return 1
+    fi
+else
+    print_warning "Ошибка загрузки SegoeScript.zip"
+    return 1
+fi
 
 cat > "${START_WINE_PATH}/data/tmp/klcp_basic_unattended.ini" <<_EOF_
 [Setup]
@@ -88,8 +128,8 @@ lang_set_preferred=1
 lang_autodetect=1
 _EOF_
 
-#   https://codecguide.com/download_kl.htm
-export CODEC_VER="1815"
+# https://codecguide.com/download_kl.htm
+export CODEC_VER="1975" # 1815 old-ver
 
 export FTP_URL=(
     "https://files2.codecguide.com/K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe"
@@ -98,30 +138,35 @@ export FTP_URL=(
 
 sw_check_url
 
-"$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe" && \
-"${WINE}" "${START_WINE_PATH}/data/tmp/K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe" /verysilent /norestart /LoadInf="${START_WINE_PATH}/data/tmp/klcp_basic_unattended.ini" "$@"
-"${WINESERVER}" -w
+if "$CRIER" -d "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe" ; then
+    "${WINE}" "${START_WINE_PATH}/data/tmp/K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe" /verysilent /norestart /LoadInf="${START_WINE_PATH}/data/tmp/klcp_basic_unattended.ini"
+    "${WINESERVER}" -w
+else
+    print_warning "Ошибка загрузки K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe"
+    return 1
+fi
 
-################################################################################
-
-#   https://developer.microsoft.com/en-us/microsoft-edge/webview2/
+# https://developer.microsoft.com/en-us/microsoft-edge/webview2/
 #export URL="https://msedge.sf.dl.delivery.mp.microsoft.com/filestreamingservice/files/2e372271-55ba-41c0-89b9-dfc306dee437/MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
-#"$CRIER" -d "${URL}" "${START_WINE_PATH}/data/tmp/MicrosoftEdgeWebView2RuntimeInstallerX64.exe" &&
+#"$CRIER" -d "${URL}" "${START_WINE_PATH}/data/tmp/MicrosoftEdgeWebView2RuntimeInstallerX64.exe" && \
 #"${WINE}" start.exe /exec "${START_WINE_PATH}/data/tmp/MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
 #"${WINESERVER}" -w
 
 #try_remove "${START_WINE_PATH}/data/tmp/MicrosoftEdgeWebView2RuntimeInstallerX64.exe"
 try_remove "${START_WINE_PATH}/data/tmp/K-Lite_Codec_Pack_${CODEC_VER}_Basic.exe"
 try_remove "${START_WINE_PATH}/data/tmp/klcp_basic_unattended.ini"
-try_remove "$WINEPREFIX/drive_c/windows/Installer/"*
-try_remove "$WINEPREFIX/drive_c/windows/temp/"*
+try_remove "$WINEPREFIX/drive_c/windows/temp"
+try_create_dir "$WINEPREFIX/drive_c/windows/temp"
 try_remove "$WINEPREFIX/.update-timestamp"
 try_remove "$WINEPREFIX/dosdevices"
 try_remove "$WINEPREFIX/drive_c/users"
 try_remove "$WINEPREFIX/drive_c/windows/Fonts/corefonts.installed"
 try_remove "$WINEPREFIX/drive_c/ProgramData/Package Cache"
-try_link "${START_WINE_PATH}/data/app_saves" "$WINEPREFIX/drive_c/users"
-try_remove "${START_WINE_PATH}/data/tmp/pfx_default.iso"
-mksquashfs "${START_WINE_PATH}/data/pfx/pfx_default" "${START_WINE_PATH}/data/tmp/pfx_default.iso" -noappend -b 1M -comp zstd -Xcompression-level 1 && \
-"$CRIER" -i "$(eval_gettext "Backup completed successfully")"
+
+if mksquashfs "${START_WINE_PATH}/data/pfx/pfx_default" "${START_WINE_PATH}/data/tmp/pfx_default.iso" -noappend -b 1M -comp zstd -Xcompression-level 1 ; then
+    "$CRIER" -i "$(eval_gettext "Backup completed successfully")"
+else
+    print_warning "Ошибка создания pfx_default.iso"
+    return 1
+fi
 
