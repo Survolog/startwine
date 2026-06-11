@@ -12,6 +12,18 @@ print_info () { echo -e "${GREEN}[ INFO ][$(date +"%Y.%m.%d %T")]: $* $RESETCOLO
 
 print_warning () { echo -e "${YELLOW}[ WARNING ][$(date +"%Y.%m.%d %T")]: $* $RESETCOLOR" ; }
 
+print_gui_send () {
+
+    if [[ "${SW_SILENT_DL}" != 1 ]]; then
+        if command -v notify-send &>/dev/null ; then
+            notify-send -a "StartWine" "$1" &
+        elif command -v yad &>/dev/null ; then
+            GDK_BACKEND=x11 yad --on-top --fixed --timeout=5 --button="OK" --title="Startwine" --text="$1" &>/dev/null &
+        fi
+    fi
+
+}
+
 if [ "${EUID}" == 0 ]; then
     clear
     print_error "Please do not run this script as root!"
@@ -20,7 +32,7 @@ fi
 
 #    version
 export SW_GIT_VER="@VERSION@"
-export SW_RUNTIME_GIT_VER="15"
+export SW_RUNTIME_GIT_VER="16"
 
 [ ! -d "${HOME}/.config" ] && \
     mkdir -p "${HOME}/.config"
@@ -50,15 +62,11 @@ export SW_RUNTIME="${START_WINE_PATH}/data/runtime/sw_runtime"
 [ ! -d "${START_WINE_PATH}/data/tmp" ] && \
     mkdir -p "${START_WINE_PATH}/data/tmp"
 
-if [ -f "${START_WINE_PATH}/data/runtime/version" ]; then
-    SW_RUNTIME_CURRENT_VER="$(cat "${START_WINE_PATH}/data/runtime/version")"
-    export SW_RUNTIME_CURRENT_VER
-fi
+[ -f "${START_WINE_PATH}/data/runtime/version" ] && \
+    export SW_RUNTIME_CURRENT_VER="$(cat "${START_WINE_PATH}/data/runtime/version")"
 
-if [ -f "${START_WINE_PATH}/data/scripts/version" ]; then
-    SW_CURRENT_VER="$(cat "${START_WINE_PATH}/data/scripts/version")"
-    export SW_CURRENT_VER
-fi
+[ -f "${START_WINE_PATH}/data/scripts/version" ] && \
+    export SW_CURRENT_VER="$(cat "${START_WINE_PATH}/data/scripts/version")"
 
 sw_check_url () {
 
@@ -334,7 +342,7 @@ try_download () {
 
 }
 
-if [[ "${SW_RUNTIME_CURRENT_VER}" -lt "${SW_RUNTIME_GIT_VER}" ]]; then
+if [[ "${SW_RUNTIME_CURRENT_VER:-0}" -lt "${SW_RUNTIME_GIT_VER}" ]]; then
 
     [ -f "${SW_RUNTIME}" ] && \
         rm -rf "${SW_RUNTIME}"
@@ -360,16 +368,18 @@ if [[ "${SW_RUNTIME_CURRENT_VER}" -lt "${SW_RUNTIME_GIT_VER}" ]]; then
         [ ! -L "${START_WINE_PATH}/data/runtime/steam-sw" ] && \
             ln -sfr "${SW_RUNTIME}" "${START_WINE_PATH}/data/runtime/steam-sw"
 
+        print_info "Download sw_runtime completed successfully"
+        print_gui_send "Download sw_runtime completed successfully"
         echo "${SW_RUNTIME_GIT_VER}" > "${START_WINE_PATH}/data/runtime/version"
-        print_info "Download completed successfully"
     else
         print_error "Failed to download sw_runtime from (repo), please run the installation again."
+        print_gui_send "Failed to download sw_runtime from (repo), please run the installation again."
         exit 1
     fi
 
 fi
 
-if [[ "${SW_CURRENT_VER}" -lt "${SW_GIT_VER}" ]]; then
+if [[ "${SW_CURRENT_VER:-0}" -lt "${SW_GIT_VER}" ]]; then
 
     [ -L "$HOME/.local/bin/sw" ] && \
         rm "$HOME/.local/bin/sw"
@@ -412,9 +422,9 @@ if [[ "${SW_CURRENT_VER}" -lt "${SW_GIT_VER}" ]]; then
         sw_check_url
 
         if try_download "${URL_DOWNLOAD}" "${START_WINE_PATH}/data/tmp/StartWine_v${SW_GIT_VER}.tar.xz"; then
-            print_info "Download completed successfully"
-            START_WINE_EXTRACT="$(dirname "${START_WINE_PATH}")"
-            export START_WINE_EXTRACT
+            print_info "Download StartWine_v${SW_GIT_VER}.tar.xz completed successfully"
+            print_gui_send "Download StartWine_v${SW_GIT_VER}.tar.xz completed successfully"
+            export START_WINE_EXTRACT="$(dirname "${START_WINE_PATH}")"
 
             if [ "${DIRECTORY_EXIST}" == "true" ]; then
                 "${START_WINE_PATH}/data/runtime/sw" --shutdown
@@ -422,34 +432,37 @@ if [[ "${SW_CURRENT_VER}" -lt "${SW_GIT_VER}" ]]; then
             fi
 
             if "${SW_RUNTIME}" tar -xvJf "${START_WINE_PATH}/data/tmp/StartWine_v${SW_GIT_VER}.tar.xz" -C "${START_WINE_EXTRACT}"; then
-                print_info "Unpacking completed successfully"
+                print_info "Unpacking StartWine_v${SW_GIT_VER}.tar.xz completed successfully"
+                print_gui_send "Unpacking StartWine_v${SW_GIT_VER}.tar.xz completed successfully"
                 echo "${SW_GIT_VER}" > "${START_WINE_PATH}/data/scripts/version"
                 cp -rf /usr/share/startwine/data "${START_WINE_EXTRACT}/StartWine"
             else
-                print_error "Failed to unpack archive"
+                print_error "Failed to unpack StartWine_v${SW_GIT_VER}.tar.xz archive"
+                print_gui_send "Failed to unpack StartWine_v${SW_GIT_VER}.tar.xz archive"
             fi
 
         else
-            print_error "Failed to download archive from (repo), please run the installation again..."
+            print_error "Failed to download StartWine_v${SW_GIT_VER}.tar.xz archive from (repo), please run the installation again..."
+            print_gui_send "Failed to download StartWine_v${SW_GIT_VER}.tar.xz archive from (repo), please run the installation again..."
             exit 1
         fi
 
         if [ "${DIRECTORY_EXIST}" == "true" ]; then
             "${START_WINE_PATH}/data/runtime/sw_runtime" "${START_WINE_PATH}/data/scripts/sw_runlib"
             print_info "StartWine update to version ${SW_GIT_VER} completed successfully"
+            print_gui_send "StartWine update to version ${SW_GIT_VER} completed successfully"
         else
             "${START_WINE_PATH}/data/runtime/sw" --path "${START_WINE_PATH}" "$@" 2>/dev/null
-
-            START_WINE_PATH="$(cat "${HOME}/.config/swrc"|head -n1)"
-            export START_WINE_PATH
-
+            export START_WINE_PATH="$(cat "${HOME}/.config/swrc"|head -n1)"
             "${START_WINE_PATH}/data/runtime/sw_runtime" "${START_WINE_PATH}/data/scripts/sw_runlib"
-            print_info "Installation completed successfully"
+            print_info "Installation StartWine-Launcher completed successfully"
+            print_gui_send "Installation StartWine-Launcher completed successfully"
         fi
 
         exit 0
     else
         print_error "${SW_RUNTIME} not exists!"
+        print_gui_send "${SW_RUNTIME} not exists!"
         exit 1
     fi
 else
